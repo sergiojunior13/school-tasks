@@ -7,8 +7,8 @@ conn = sqlite3.connect('mydatabase.db')
 conn.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY,
-        username TEXT NOT NULL,
-        email TEXT NOT NULL,
+        username TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL
     )
 ''')
@@ -17,17 +17,11 @@ conn.execute('''
 conn.execute('''
     CREATE TABLE IF NOT EXISTS devices (
         id INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL,
         device_name TEXT NOT NULL,
         access_token TEXT NOT NULL
     )
 ''')
 
-# Exemplo de inserção de dados do usuário
-conn.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", ("john_doe", "john@example.com", "hashed_password"))
-
-# Exemplo de inserção de dados de dispositivo
-conn.execute("INSERT INTO devices (device_name, access_token) VALUES (?, ?)", ("Device 1", "device_token_1"))
-
-# Confirmar a operação e fechar a conexão
 conn.commit()
 conn.close()
