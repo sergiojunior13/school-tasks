@@ -8,4 +8,9 @@ class LogoutModel(BaseModel):
 class ImageModel(BaseModel):
     access_token: str
     session: str
-    file_name: str = None
+    position: int = 0
+
+
+class AssetsModel(BaseModel):
+    filename: str
+    session: str
