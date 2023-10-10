@@ -2,8 +2,9 @@ from fastapi import FastAPI, Depends, File, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
+from fastapi.responses import FileResponse
 from app.validadores.email import validate_email
-from app.basemodel.auth import LogoutModel, ImageModel
+from app.basemodel.auth import LogoutModel, ImageModel, AssetsModel, DeleteModel
 from config import SECRET
 import sqlite3
 
@@ -30,7 +31,7 @@ def load_user(email: str):
 
 
 # Rota para authenticate
-@app.post("/auth/token/{device_name}")
+@app.post("/login")
 def login(device_name: str, data: OAuth2PasswordRequestForm = Depends()):
     email = data.username
     password = data.password
@@ -112,8 +113,8 @@ import shutil
 import os
 
 
-@app.post("/upload/image")
-async def image_upload(image: UploadFile = File(...), data: ImageModel = Depends()):
+@app.post("/image")
+async def upload_image(image: UploadFile = File(...), data: ImageModel = Depends()):
 
     MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
     if image.file.tell() > MAX_FILE_SIZE_BYTES:
@@ -142,11 +143,12 @@ async def image_upload(image: UploadFile = File(...), data: ImageModel = Depends
     }
 
 
-@app.post("/delete/image")
-def image_delete(data: ImageModel = Depends()):
+@app.delete("/image")
+def delete_image(data: ImageModel = Depends()):
     token = get_data(data)
-    image_path = f"app/userdata/{token[1]}/{data.session}/images/{data.file_name}"
-    print(image_path)
+    position = os.listdir(f"app/userdata/{token[1]}/{data.session}/images")
+    position = position[data.position]
+    image_path = f"app/userdata/{token[1]}/{data.session}/images/{position}"
     if os.path.exists(image_path):
         os.remove(image_path)
         return {
@@ -159,3 +161,131 @@ def image_delete(data: ImageModel = Depends()):
         }
 
 
+@app.get("/image")
+def get_image(data: ImageModel = Depends()):
+    token = get_data(data)
+    position = os.listdir(f"app/userdata/{token[1]}/{data.session}/images")
+    position = position[data.position]
+    image_path = f"app/userdata/{token[1]}/{data.session}/images/{position}"
+    return FileResponse(image_path, media_type="image/png")
+
+
+@app.post("/app/file")
+def post_main_files(data: AssetsModel = Depends(), file: UploadFile = File(...)):
+    directory = os.path.join(f"app/assets/{data.session}")
+    os.makedirs(directory, exist_ok=True)
+    counter = 0
+
+    while True:
+        filename = data.filename
+        file_path = os.path.join(directory, filename)
+        if not os.path.exists(file_path):
+            break
+        counter += 1
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "status": "done"
+    }
+
+
+@app.delete("/app/file")
+def delete_main_files(data: AssetsModel = Depends()):
+    path = f"app/assets/{data.session}/{data.filename}"
+    if os.path.exists(path):
+        os.remove(path)
+        return {
+            "status": "done"
+        }
+
+    else:
+        return {
+            "status": "not found"
+        }
+
+
+import mimetypes
+
+
+@app.get("/app/file")
+def get_main_files(data: AssetsModel = Depends()):
+    path = f"app/assets/{data.session}/{data.filename}"
+    mime_type, encoding = mimetypes.guess_type(path)
+    return FileResponse(path, media_type=mime_type)
+
+
+from app.basemodel.auth import TasksModel
+from tinydb import TinyDB
+
+
+@app.post("/task")
+def upload_task(data: TasksModel = Depends()):
+    token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+
+    if not os.path.exists(caminho_arquivo):
+        diretorio = os.path.dirname(caminho_arquivo)
+        os.makedirs(diretorio, exist_ok=True)
+        arquivo = open(caminho_arquivo, "x")
+        arquivo.close()
+
+    db = TinyDB(caminho_arquivo, indent=4)
+
+    db.insert({
+        "owner": token[1],
+        "members": data.members,
+        "members_id": data.members_id,
+        "title": data.title,
+        "about": data.about,
+        "description": data.description,
+        "value": data.value
+    })
+    return {"status": "done"}
+
+
+@app.get("/task")
+def get_task(data: LogoutModel = Depends()):
+    token = get_data(data)
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+                        headers={
+                            f"Content-Disposition": f"attachment;"
+                                                    f" filename=app/userdata/{token[0]}/tasks/tasks.json"})
+
+
+from app.basemodel.auth import UpdateModel
+
+
+@app.put("/task")
+def update_task(data: UpdateModel = Depends()):
+    token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    db = TinyDB(caminho_arquivo, indent=4)
+
+    db.update(
+        {
+            "owner": token[1],
+            "members": data.members,
+            "members_id": data.members_id,
+            "title": data.title,
+            "about": data.about,
+            "description": data.description,
+            "value": data.value
+        },
+        doc_ids=[data.id]
+    )
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+                        headers={f"Content-Disposition": f"attachment;"
+                                                         f" filename=app/userdata/{token[0]}/tasks/tasks.json"})
+
+
+@app.delete("/task")
+def del_task(data: DeleteModel = Depends()):
+    token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    db = TinyDB(caminho_arquivo, indent=4)
+    db.remove(doc_ids=[data.id])
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+                        headers={f"Content-Disposition": f"attachment; "
+                                                         f"filename=app/userdata/{token[0]}/tasks/tasks.json"})
