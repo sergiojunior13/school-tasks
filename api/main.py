@@ -4,7 +4,7 @@ from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
 from fastapi.responses import FileResponse
 from app.validadores.email import validate_email
-from app.basemodel.auth import LogoutModel, ImageModel, AssetsModel
+from app.basemodel.auth import LogoutModel, ImageModel, AssetsModel, DeleteModel
 from config import SECRET
 import sqlite3
 
@@ -216,3 +216,69 @@ def get_main_files(data: AssetsModel = Depends()):
     return FileResponse(path, media_type=mime_type)
 
 
+from app.basemodel.auth import TasksModel
+from tinydb import TinyDB, Query
+
+
+@app.post("/task")
+def upload_task(data: TasksModel = Depends()):
+    token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+
+    if not os.path.exists(caminho_arquivo):
+        diretorio = os.path.dirname(caminho_arquivo)
+        os.makedirs(diretorio, exist_ok=True)
+        arquivo = open(caminho_arquivo, "x")
+        arquivo.close()
+
+    db = TinyDB(caminho_arquivo, indent=4)
+
+    db.insert({
+        "owner": token[1],
+        "members": data.members,
+        "members_id": data.members_id,
+        "title": data.title,
+        "about": data.about,
+        "description": data.description,
+        "value": data.value
+    })
+    return {"status": "done"}
+
+
+@app.get("/task")
+def get_task(data: LogoutModel = Depends()):
+    token = get_data(data)
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json", headers={f"Content-Disposition": f"attachment; filename=app/userdata/{token[0]}/tasks/tasks.json"})
+
+
+from app.basemodel.auth import UpdateModel
+
+
+@app.put("/task")
+def update_task(data: UpdateModel = Depends()):
+    token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    db = TinyDB(caminho_arquivo, indent=4)
+
+    db.update(
+        {
+            "owner": token[1],
+            "members": data.members,
+            "members_id": data.members_id,
+            "title": data.title,
+            "about": data.about,
+            "description": data.description,
+            "value": data.value
+        },
+        doc_ids=[data.id]
+    )
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json", headers={f"Content-Disposition": f"attachment; filename=app/userdata/{token[0]}/tasks/tasks.json"})
+
+
+@app.delete("/task")
+def del_task(data: DeleteModel = Depends()):
+    token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    db = TinyDB(caminho_arquivo, indent=4)
+    db.remove(doc_ids=[data.id])
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json", headers={f"Content-Disposition": f"attachment; filename=app/userdata/{token[0]}/tasks/tasks.json"})
