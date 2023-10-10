@@ -217,7 +217,7 @@ def get_main_files(data: AssetsModel = Depends()):
 
 
 from app.basemodel.auth import TasksModel
-from tinydb import TinyDB, Query
+from tinydb import TinyDB
 
 
 @app.post("/task")
@@ -248,7 +248,10 @@ def upload_task(data: TasksModel = Depends()):
 @app.get("/task")
 def get_task(data: LogoutModel = Depends()):
     token = get_data(data)
-    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json", headers={f"Content-Disposition": f"attachment; filename=app/userdata/{token[0]}/tasks/tasks.json"})
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+                        headers={
+                            f"Content-Disposition": f"attachment;"
+                                                    f" filename=app/userdata/{token[0]}/tasks/tasks.json"})
 
 
 from app.basemodel.auth import UpdateModel
@@ -272,7 +275,9 @@ def update_task(data: UpdateModel = Depends()):
         },
         doc_ids=[data.id]
     )
-    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json", headers={f"Content-Disposition": f"attachment; filename=app/userdata/{token[0]}/tasks/tasks.json"})
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+                        headers={f"Content-Disposition": f"attachment;"
+                                                         f" filename=app/userdata/{token[0]}/tasks/tasks.json"})
 
 
 @app.delete("/task")
@@ -281,4 +286,6 @@ def del_task(data: DeleteModel = Depends()):
     caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
     db = TinyDB(caminho_arquivo, indent=4)
     db.remove(doc_ids=[data.id])
-    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json", headers={f"Content-Disposition": f"attachment; filename=app/userdata/{token[0]}/tasks/tasks.json"})
+    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+                        headers={f"Content-Disposition": f"attachment; "
+                                                         f"filename=app/userdata/{token[0]}/tasks/tasks.json"})

@@ -1,2 +1,4 @@
 config.py
 mydatabase.db
+*.db
+venv/
