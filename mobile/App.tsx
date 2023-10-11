@@ -1,20 +1,33 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  useFonts,
+  NunitoSans_400Regular,
+  NunitoSans_600SemiBold,
+  NunitoSans_700Bold,
+} from "@expo-google-fonts/nunito-sans";
+
+import { Routes } from "./routes";
+import { AuthContextProvider } from "./context/auth";
 
 export default function App() {
+  let [fontsLoaded] = useFonts({
+    NunitoSans_400Regular,
+    NunitoSans_600SemiBold,
+    NunitoSans_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>SchoolTasks</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaView className="flex-1 bg-background">
+      <AuthContextProvider>
+        <Routes />
+      </AuthContextProvider>
+
+      <StatusBar style="light" backgroundColor="#18181b" />
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
