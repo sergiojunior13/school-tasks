@@ -6,9 +6,13 @@ interface ActivityProps {
   children: React.ReactNode;
 }
 
-export function Root({ children }: ActivityProps) {
+export function Root({ children, ...rest }: TouchableOpacityProps) {
   return (
-    <TouchableOpacity activeOpacity={0.7} className="p-3 bg-zinc-700 rounded-xl mt-3 space-y-4">
+    <TouchableOpacity
+      activeOpacity={0.7}
+      className="p-3 bg-zinc-700 rounded-xl mt-3 space-y-4"
+      {...rest}
+    >
       {children}
     </TouchableOpacity>
   );

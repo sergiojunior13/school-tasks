@@ -14,15 +14,11 @@ export function Root({ children }: DayProps) {
 }
 
 export function Date({ children }: DayProps) {
-  return (
-    <Text className="text-zinc-400 text-lg font-sans-semibold">{children}</Text>
-  );
+  return <Text className="text-zinc-400 text-lg font-sans-semibold">{children}</Text>;
 }
 
 export function Content({ children }: DayProps) {
-  return (
-    <Text className="text-zinc-50 text-2xl font-sans-bold">{children}</Text>
-  );
+  return <Text className="text-zinc-50 text-2xl font-sans-bold">{children}</Text>;
 }
 
 export function AlertContainer({ children }: DayProps) {
@@ -30,7 +26,5 @@ export function AlertContainer({ children }: DayProps) {
 }
 
 export function Alert({ children }: DayProps) {
-  return (
-    <Text className="ml-2 text-red-600 text-sm font-sans-bold">{children}</Text>
-  );
+  return <Text className="ml-2 text-red-600 text-base font-sans-bold">{children}</Text>;
 }

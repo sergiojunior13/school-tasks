@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Platform, TouchableOpacity, Text, View } from "react-native";
 import { ControllerRenderProps, FieldErrors } from "react-hook-form";
-import dayjs from "dayjs";
 
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 
@@ -9,6 +8,7 @@ import { ActivityData } from "../../services/tasks";
 
 import { Octicons } from "@expo/vector-icons";
 import colors from "tailwindcss/colors";
+import dayjs from "dayjs";
 
 interface DateInputProps extends ControllerRenderProps<ActivityData, "deliveryDate"> {
   mode?: "date" | "time";
@@ -28,7 +28,7 @@ export function DateInput({
   const [isOpen, setIsOpen] = useState(false);
 
   function handleChange(_, date: Date) {
-    onChange(date.toISOString());
+    onChange(dayjs(date).startOf("day").toISOString());
   }
 
   function showDateInput() {

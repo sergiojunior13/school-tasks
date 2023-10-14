@@ -1,5 +1,5 @@
 import { NavigationContainer } from "@react-navigation/native";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 
 import { AuthContext } from "../context/auth";
 
@@ -9,9 +9,5 @@ import { AuthRoutes } from "./auth.routes";
 export function Routes() {
   const { isSigned } = useContext(AuthContext);
 
-  return (
-    <NavigationContainer>
-      {isSigned ? <AppRoutes /> : <AuthRoutes />}
-    </NavigationContainer>
-  );
+  return <NavigationContainer>{isSigned ? <AppRoutes /> : <AuthRoutes />}</NavigationContainer>;
 }

@@ -11,11 +11,16 @@ import * as Modal from "../src/components/Modal";
 
 import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
 
-import { ActivityData, createActivity } from "../services/tasks";
+import { ActivityData, editActivity } from "../services/tasks";
 import { DateInput } from "../src/components/DateInput";
 import { ActivitiesContext } from "../context/activities";
 
-export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-activity">) {
+export function EditActivity({
+  navigation: { goBack },
+  route,
+}: RootBottomTabNavigation<"edit-activity">) {
+  const { params: activity }: { params?: ActivityData } = route;
+
   const {
     control,
     formState: { errors },
@@ -26,13 +31,13 @@ export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-a
     reset,
   } = useForm<ActivityData>({
     defaultValues: {
-      points: 0,
-      participants: [],
+      ...activity,
+      participants: activity.participants.filter(participant => participant !== ""),
     },
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { addActivity } = useContext(ActivitiesContext);
+  const { changeActivity } = useContext(ActivitiesContext);
 
   function handleChangeIsModalOpen() {
     setIsModalOpen(isOpen => !isOpen);
@@ -51,15 +56,13 @@ export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-a
   }
 
   function onSubmit(data: ActivityData) {
-    reset();
-
     if (!data.description) {
       data.description = data.title;
     }
 
-    createActivity(data).then(addedActivity => {
-      addActivity(addedActivity);
-      navigation.navigate("home");
+    editActivity(data).then(editedActivity => {
+      changeActivity(editedActivity);
+      goBack();
     });
   }
 
@@ -77,10 +80,10 @@ export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-a
 
       <View className="pt-3 px-3 space-y-2">
         <View className="px-2 flex-row space-x-5 items-center">
-          <TouchableOpacity activeOpacity={0.7} onPress={navigation.goBack} className="p-4 pl-0">
+          <TouchableOpacity activeOpacity={0.7} onPress={goBack} className="p-4 pl-0">
             <Octicons name="chevron-left" color={colors.zinc[50]} size={32} />
           </TouchableOpacity>
-          <Text className="text-center text-zinc-50 text-2xl font-sans-bold">Criar Atividade</Text>
+          <Text className="text-center text-zinc-50 text-2xl font-sans-bold">Editar Atividade</Text>
         </View>
         <View className="space-y-8">
           <Controller
@@ -161,9 +164,10 @@ export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-a
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={handleSubmit(onSubmit)}
-            className="bg-green-600 rounded-xl justify-center items-center py-3"
+            className="bg-green-600 rounded-xl justify-center items-center flex-row space-x-2 py-3"
           >
-            <Text className="text-zinc-50 font-sans-semibold text-xl">Criar Atividade</Text>
+            <Octicons name="pencil" color={colors.zinc[50]} size={24} />
+            <Text className="text-zinc-50 font-sans-semibold text-xl">Editar Atividade</Text>
           </TouchableOpacity>
         </View>
       </View>

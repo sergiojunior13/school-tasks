@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import logo from "../../assets/logo.png";
 
 export function Header() {

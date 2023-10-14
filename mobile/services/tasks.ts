@@ -105,3 +105,28 @@ export async function deleteActivity(activityId: number) {
 
   await api.delete("/task", { params });
 }
+
+interface EditActivityParams extends APIActivityData {
+  access_token: string;
+}
+
+export async function editActivity(activity: ActivityData) {
+  const accessToken = await getAccessTokenInStorage();
+
+  const params: EditActivityParams = {
+    access_token: accessToken,
+
+    id: activity.id,
+    title: activity.title,
+    description: activity.description,
+    about: activity.subject,
+    date: activity.deliveryDate,
+    members: activity.participants.join(","),
+    value: activity.points,
+    members_id: "",
+  };
+
+  await api.put("/task", null, { params });
+
+  return activity;
+}

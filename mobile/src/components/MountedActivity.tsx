@@ -1,38 +1,38 @@
 import { useState, useContext } from "react";
-import { ActivityData, deleteActivity } from "../../services/tasks";
+import { Text, View } from "react-native";
+
+import { useNavigation } from "@react-navigation/native";
+import { RootBottomTabNavigation } from "../../routes/bottom-tab-navigator";
 
 import * as Activity from "./Activity";
 import * as Modal from "./Modal";
 
-import Octicons from "@expo/vector-icons/Octicons";
-import colors from "tailwindcss/colors";
-import { Text, View } from "react-native";
+import { ActivityData, deleteActivity } from "../../services/tasks";
 import { ActivitiesContext } from "../../context/activities";
 
-export function MountedActivity({
-  title,
-  subject,
-  participants,
-  points,
-  id,
-}: Omit<ActivityData, "description" | "deliveryDate">) {
+import Octicons from "@expo/vector-icons/Octicons";
+import colors from "tailwindcss/colors";
+
+export function MountedActivity(activity: ActivityData) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { removeActivity } = useContext(ActivitiesContext);
 
+  const { jumpTo } = useNavigation<RootBottomTabNavigation<any>["navigation"]>();
+
   return (
-    <Activity.Root>
+    <Activity.Root onPress={() => jumpTo("full-activity", activity)}>
       <MountedModal
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         removeActivity={removeActivity}
-        activityId={id}
+        activityId={activity.id}
       />
       <Activity.Header>
-        <Activity.Subject>{subject}</Activity.Subject>
+        <Activity.Subject>{activity.subject}</Activity.Subject>
 
         <Activity.ButtonGroup>
-          <Activity.Button className="bg-green-500">
-            <Octicons name="check" size={22} color={colors.zinc[50]} />
+          <Activity.Button className="bg-sky-500" onPress={() => jumpTo("edit-activity", activity)}>
+            <Octicons name="pencil" size={22} color={colors.zinc[50]} />
           </Activity.Button>
           <Activity.Button className="bg-red-500" onPress={() => setIsModalOpen(true)}>
             <Octicons name="trash" size={22} color={colors.zinc[50]} />
@@ -41,14 +41,14 @@ export function MountedActivity({
       </Activity.Header>
 
       <Activity.Content>
-        <Activity.ContentTitle>{title}</Activity.ContentTitle>
+        <Activity.ContentTitle>{activity.title}</Activity.ContentTitle>
       </Activity.Content>
 
       <Activity.Footer>
-        {!!participants[0] && (
-          <Activity.Participants>{participants.join(", ")}</Activity.Participants>
+        {!!activity.participants[0] && (
+          <Activity.Participants>{activity.participants.join(", ")}</Activity.Participants>
         )}
-        {points > 0 && <Activity.Points>{points.toFixed(1)}pts</Activity.Points>}
+        {activity.points > 0 && <Activity.Points>{activity.points.toFixed(1)}pts</Activity.Points>}
       </Activity.Footer>
     </Activity.Root>
   );

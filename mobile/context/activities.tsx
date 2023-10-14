@@ -5,6 +5,7 @@ interface ActivitiesContextProps {
   activities: ActivityData[];
   addActivity(activityData: Omit<ActivityData, "id">): void;
   removeActivity(activityIndex: number): void;
+  changeActivity(newActivityData: ActivityData): void;
 }
 
 export const ActivitiesContext = createContext<ActivitiesContextProps>(null);
@@ -24,6 +25,14 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
     setActivities(prevActivities => prevActivities.filter(({ id }) => id !== activityId));
   }
 
+  function changeActivity(newActivityData: ActivityData) {
+    const activityIndex = activities.findIndex(({ id }) => id === newActivityData.id);
+    const changedActivities = [...activities];
+    changedActivities[activityIndex] = newActivityData;
+
+    setActivities(changedActivities);
+  }
+
   useEffect(() => {
     getAllActivities()
       .then(setActivities)
@@ -31,7 +40,7 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
   }, []);
 
   return (
-    <ActivitiesContext.Provider value={{ activities, addActivity, removeActivity }}>
+    <ActivitiesContext.Provider value={{ activities, addActivity, removeActivity, changeActivity }}>
       {children}
     </ActivitiesContext.Provider>
   );

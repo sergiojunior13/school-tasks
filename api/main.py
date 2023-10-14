@@ -276,7 +276,8 @@ def update_task(data: UpdateModel = Depends()):
             "title": data.title,
             "about": data.about,
             "description": data.description,
-            "value": data.value
+            "value": data.value,
+            "date": data.date
         },
         doc_ids=[data.id]
     )

@@ -2,14 +2,26 @@ import { BottomTabBarProps, RootBottomTabNavigationProp } from "@react-navigatio
 
 import { TabNavigationState } from "@react-navigation/native";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { ActivityData } from "../services/tasks";
 
-export type BottomTabScreenNames = ["home", "all-activities", "create-activity", "account"];
-export type RootBottomTabParamList = Record<BottomTabScreenNames[number], undefined>;
+export type BottomTabParamList = {
+  home: undefined;
+  "all-activities": undefined;
+  "full-activity": ActivityData;
+  "create-activity": undefined;
+  "edit-activity": ActivityData;
+  account: undefined;
+};
+
+export type BottomTabScreenNames = keyof BottomTabParamList;
 
 export interface RootBottomTabBarProps extends BottomTabBarProps {
-  state: TabNavigationState<RootBottomTabParamList | null>;
+  state: TabNavigationState<RootBottomTabParamList>;
 }
 
 export type RootBottomTabBarNavigatorProps = TabNavigationState<RootBottomTabParamList>;
 
-export type RootBottomTabNavigation = BottomTabScreenProps<RootBottomTabParamList>;
+export type RootBottomTabNavigation<ScreenName> = BottomTabScreenProps<
+  RootBottomTabParamList,
+  ScreenName
+>;
