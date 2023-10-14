@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, File, UploadFile
+from fastapi import FastAPI, Depends, File, UploadFile, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
@@ -11,7 +11,6 @@ import sqlite3
 app = FastAPI()
 
 manager = LoginManager(SECRET, token_url='/auth/token')
-
 
 def get_data(model):
     with sqlite3.connect('mydatabase.db') as conn:
@@ -62,7 +61,7 @@ def signup(data: OAuth2PasswordRequestForm = Depends()):
         validate_email(data.username)
 
     except:
-        raise InvalidCredentialsException
+        raise HTTPException(status_code=401, detail="Invalid email")
 
     email = data.username
     username = data.username
@@ -71,14 +70,12 @@ def signup(data: OAuth2PasswordRequestForm = Depends()):
     user = load_user(email)
 
     if user:
-        return {
-            'status': 'username already exist'
-        }
+        raise HTTPException(status_code=444, detail="Username already exists")
 
     if len(password) < 8:
-        return "A senha deve ser maior ou igual a 8 caracteres"
+        raise HTTPException(status_code=408, detail="Password must be longer than 8 characters")
     elif len(password) > 20:
-        return "A senha deve ser menor ou igual a 20 caracteres"
+        raise HTTPException(status_code=420, detail="Password must be no longer than 20 characters")
 
     with sqlite3.connect('mydatabase.db') as conn:
         cursor = conn.cursor()
@@ -118,7 +115,7 @@ async def upload_image(image: UploadFile = File(...), data: ImageModel = Depends
 
     MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
     if image.file.tell() > MAX_FILE_SIZE_BYTES:
-        return "O arquivo é muito grande. Limite de 5 MB."
+        raise HTTPException(status_code=413, detail="File is too large. 5 MB limit.")
 
     token = get_data(data)
     base_directory = "app/userdata"
@@ -156,9 +153,7 @@ def delete_image(data: ImageModel = Depends()):
         }
 
     else:
-        return {
-            "status": "not found"
-        }
+        raise HTTPException(status_code=404, detail="Image not found!")
 
 
 @app.get("/image")
@@ -233,21 +228,31 @@ def upload_task(data: TasksModel = Depends()):
 
     db = TinyDB(caminho_arquivo, indent=4)
 
-    db.insert({
+    task_id = db.insert({
         "owner": token[1],
         "members": data.members,
         "members_id": data.members_id,
         "title": data.title,
         "about": data.about,
         "description": data.description,
+        "date": data.date,
         "value": data.value
     })
-    return {"status": "done"}
+
+    return {"id": task_id}
 
 
 @app.get("/task")
 def get_task(data: LogoutModel = Depends()):
     token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+
+    if not os.path.exists(caminho_arquivo):
+        diretorio = os.path.dirname(caminho_arquivo)
+        os.makedirs(diretorio, exist_ok=True)
+        arquivo = open(caminho_arquivo, "x")
+        arquivo.close()
+
     return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
                         headers={
                             f"Content-Disposition": f"attachment;"

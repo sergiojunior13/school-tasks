@@ -10,6 +10,8 @@ import {
 import { Routes } from "./routes";
 import { AuthContextProvider } from "./context/auth";
 
+import "./utils/dayjs";
+
 export default function App() {
   let [fontsLoaded] = useFonts({
     NunitoSans_400Regular,

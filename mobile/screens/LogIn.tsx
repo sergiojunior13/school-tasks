@@ -6,15 +6,19 @@ import { AuthContext } from "../context/auth";
 
 import logo from "../assets/logo.png";
 
-import { LoginInput } from "../src/components/LoginInput";
-import { FormData } from "./LogIn";
-
 import { useForm, Controller } from "react-hook-form";
 
 import { StackScreenProps } from "../routes/stack-navigator";
 
-export function SignIn({ navigation }: StackScreenProps) {
-  const { signIn } = useContext(AuthContext);
+import { LoginInput } from "../src/components/LoginInput";
+
+export interface FormData {
+  email: string;
+  password: string;
+}
+
+export function LogIn({ navigation }: StackScreenProps) {
+  const { logIn } = useContext(AuthContext);
 
   const {
     control,
@@ -24,9 +28,10 @@ export function SignIn({ navigation }: StackScreenProps) {
   } = useForm<FormData>();
 
   function onSubmit(data: FormData) {
-    signIn(data).catch(errorMessage =>
-      setError("email", { message: errorMessage })
-    );
+    logIn(data).catch(errorMessage => {
+      setError("email", { message: errorMessage });
+      setError("password", { message: errorMessage });
+    });
   }
 
   return (
@@ -82,19 +87,19 @@ export function SignIn({ navigation }: StackScreenProps) {
             onPress={handleSubmit(onSubmit)}
           >
             <Text className="text-center text-zinc-50 font-sans-bold text-xl">
-              Criar Conta
+              Entrar
             </Text>
           </TouchableOpacity>
           <View className="flex-row items-center m-auto">
             <Text className="text-zinc-50 font-sans text-base align-middle">
-              Já possui uma conta?{" "}
+              Ainda não possui uma conta?{" "}
             </Text>
             <TouchableOpacity
               activeOpacity={0.7}
-              onPress={() => navigation.replace("log-in")}
+              onPress={() => navigation.replace("sign-in")}
             >
               <Text className="text-sky-500 font-sans-bold text-base">
-                Entrar
+                Criar conta
               </Text>
             </TouchableOpacity>
           </View>

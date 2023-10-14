@@ -1,14 +1,77 @@
+import React, { useContext } from "react";
 import { View, TouchableOpacity, Text, ScrollView } from "react-native";
 
 import * as Day from "../src/components/Day";
-import * as Activity from "../src/components/Activity";
 
-import Octicons from "@expo/vector-icons/Octicons";
-import colors from "tailwindcss/colors";
+import { ActivitiesContext } from "../context/activities";
 
-export function AllActivities() {
+import dayjs from "dayjs";
+
+import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
+import { MountedActivity } from "../src/components/MountedActivity";
+
+function formatDate(date: string) {
+  const differenceOfDays = dayjs().set("h", 0).set("m", 0).set("s", 0).diff(date, "d");
+
+  switch (differenceOfDays) {
+    case -1:
+      return "Amanhã";
+    case 0:
+      return "Hoje";
+    case 1:
+      return "Ontem";
+    default:
+      return dayjs(date).format("DD/MM");
+  }
+}
+
+function sortDatesByDate(dates: string[]) {
+  return dates.sort((date1, date2) => {
+    const dateA = dayjs(date1);
+    const dateB = dayjs(date2);
+
+    if (dateA.isBefore(dateB)) {
+      return -1;
+    } else if (dateA.isAfter(dateB)) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+}
+
+export function AllActivities({ navigation }: RootBottomTabNavigation) {
+  const { activities } = useContext(ActivitiesContext);
+
+  const activitiesDate = activities.map(activity => activity.deliveryDate);
+  dayjs;
+  const activitiesDateSortedByDate = sortDatesByDate(activitiesDate);
+  const noRepeatedActivitiesDate = [...new Set(activitiesDateSortedByDate)];
+
+  const activitiesWithDateJSX = noRepeatedActivitiesDate.map((date, index) => (
+    <View key={date + index}>
+      <Day.Root>
+        <Day.Date>{dayjs(date).format("DD/MM")}</Day.Date>
+        <Day.Content>{formatDate(date)}</Day.Content>
+      </Day.Root>
+      {activities
+        .filter(task => task.deliveryDate == date)
+        .map(({ title, subject, participants, points, id }) => (
+          <MountedActivity
+            title={title}
+            participants={participants}
+            points={points}
+            subject={subject}
+            key={title + index}
+            id={id}
+          />
+        ))}
+    </View>
+  ));
+
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       overScrollMode="never"
       contentContainerStyle={{ paddingBottom: 96 }}
     >
@@ -17,66 +80,24 @@ export function AllActivities() {
           Todas as atividades
         </Text>
         <View className="p-3 bg-zinc-800 rounded-xl space-y-10">
-          <View>
-            <Day.Root>
-              <Day.AlertContainer>
-                <Day.Content>07/10</Day.Content>
-                <Day.Alert>• Atrasado</Day.Alert>
-              </Day.AlertContainer>
-            </Day.Root>
+          {activities.length > 0 ? (
+            activitiesWithDateJSX
+          ) : (
+            <Text className="text-zinc-400 font-sans-semibold text-base text-center">
+              Você ainda não tem nenhuma atividade registrada.
+            </Text>
+          )}
 
-            <DefaultActivity />
-            <DefaultActivity />
-          </View>
-
-          <View>
-            <Day.Root>
-              <Day.Date>08/10</Day.Date>
-              <Day.Content>Hoje</Day.Content>
-            </Day.Root>
-            <DefaultActivity />
-            <DefaultActivity />
-          </View>
-
-          <View>
-            <Day.Root>
-              <Day.Date>09/10</Day.Date>
-              <Day.Content>Amanhã</Day.Content>
-            </Day.Root>
-            <DefaultActivity />
-            <DefaultActivity />
-          </View>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate("create-activity")}
+          >
+            <Text className="text-sky-500 text-lg font-sans-semibold text-center mt-3">
+              Criar Atividade
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
-  );
-}
-
-function DefaultActivity() {
-  return (
-    <Activity.Root>
-      <Activity.Header>
-        <Activity.Subject>Biologia</Activity.Subject>
-
-        <Activity.ButtonGroup>
-          <Activity.Button className="bg-green-500">
-            <Octicons name="check" size={22} color={colors.zinc[50]} />
-          </Activity.Button>
-          <Activity.Button className="bg-red-500">
-            <Octicons name="trash" size={22} color={colors.zinc[50]} />
-          </Activity.Button>
-        </Activity.ButtonGroup>
-      </Activity.Header>
-
-      <Activity.Content>
-        <Activity.ContentTitle>Olá Mundo</Activity.ContentTitle>
-      </Activity.Content>
-
-      <Activity.Footer>
-        <Activity.Participants>Sérgio, Mari</Activity.Participants>
-
-        <Activity.Points>7,0pts</Activity.Points>
-      </Activity.Footer>
-    </Activity.Root>
   );
 }

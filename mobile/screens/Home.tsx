@@ -1,17 +1,84 @@
+import { useContext } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-import * as Day from "../src/components/Day";
-import * as Activity from "../src/components/Activity";
-
-import Octicons from "@expo/vector-icons/Octicons";
-
-import colors from "tailwindcss/colors";
 import { Header } from "../src/components/Header";
-import { BottomTabNavigation } from "../routes/bottom-tab-navigator";
+import * as Day from "../src/components/Day";
 
-export function Home({ navigation }: BottomTabNavigation) {
+import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
+
+import { ActivitiesContext } from "../context/activities";
+
+import dayjs from "dayjs";
+import { MountedActivity } from "../src/components/MountedActivity";
+
+function sortDatesByDate(dates: string[]) {
+  return dates.sort((date1, date2) => {
+    const dateA = dayjs(date1);
+    const dateB = dayjs(date2);
+
+    if (dateA.isBefore(dateB)) {
+      return -1;
+    } else if (dateA.isAfter(dateB)) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+}
+
+function formatDate(date: string) {
+  const differenceOfDays = dayjs().set("h", 0).set("m", 0).set("s", 0).diff(date, "d");
+
+  switch (differenceOfDays) {
+    case -1:
+      return "Amanhã";
+    case 0:
+      return "Hoje";
+    case 1:
+      return "Ontem";
+    default:
+      return dayjs(date).format("DD/MM");
+  }
+}
+
+export function Home({ navigation }: RootBottomTabNavigation) {
+  const { activities } = useContext(ActivitiesContext);
+
+  const activitiesDate = activities.map(activity => activity.deliveryDate);
+  const todayAndTomorrowActivitiesDate = activitiesDate.filter(activityDate => {
+    const differenceOfDays = dayjs().diff(activityDate, "d");
+
+    if (differenceOfDays === 0 || differenceOfDays === -1) {
+      return true;
+    }
+  });
+  const activitiesDateSortedByDate = sortDatesByDate(todayAndTomorrowActivitiesDate);
+  const noRepeatedTodayAndTomorrowActivitiesDate = [...new Set(activitiesDateSortedByDate)];
+
+  const activitiesWithDateJSX = noRepeatedTodayAndTomorrowActivitiesDate.map((date, index) => (
+    <View key={date + index}>
+      <Day.Root>
+        <Day.Date>{dayjs(date).format("DD/MM")}</Day.Date>
+        <Day.Content>{formatDate(date)}</Day.Content>
+      </Day.Root>
+      {activities
+        .filter(activity => activity.deliveryDate == date)
+        .map(({ title, subject, participants, points, id }) => (
+          <MountedActivity
+            title={title}
+            participants={participants}
+            points={points}
+            subject={subject}
+            key={title + index}
+            id={id}
+          />
+        ))}
+    </View>
+  ));
+
   return (
     <ScrollView
+      keyboardShouldPersistTaps="handled"
       overScrollMode="never"
       contentContainerStyle={{ paddingBottom: 96 }}
     >
@@ -23,62 +90,31 @@ export function Home({ navigation }: BottomTabNavigation) {
             Suas atividades para hoje/amanhã
           </Text>
           <View className="p-3 bg-zinc-800 rounded-xl space-y-10">
-            <View>
-              <Day.Root>
-                <Day.Date>08/10</Day.Date>
-                <Day.Content>Hoje</Day.Content>
-              </Day.Root>
-              <DefaultActivity />
-              <DefaultActivity />
-            </View>
-            <View>
-              <Day.Root>
-                <Day.Date>09/10</Day.Date>
-                <Day.Content>Amanhã</Day.Content>
-              </Day.Root>
-              <DefaultActivity />
-              <DefaultActivity />
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => navigation.navigate("all-activities")}
-              >
-                <Text className="text-sky-500 text-lg font-sans-semibold text-center mt-3">
-                  Ver todas as atividades
-                </Text>
-              </TouchableOpacity>
-            </View>
+            {activities.length > 0 ? (
+              activitiesWithDateJSX
+            ) : (
+              <Text className="text-zinc-400 font-sans-semibold text-base text-center">
+                Você ainda não tem nenhuma atividade registrada.
+              </Text>
+            )}
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                if (activities.length > 0) {
+                  navigation.navigate("all-activities");
+                } else {
+                  navigation.navigate("create-activity");
+                }
+              }}
+            >
+              <Text className="text-sky-500 text-lg font-sans-semibold text-center mt-3">
+                {activities.length > 0 ? "Ver todas as atividades" : "Criar Atividade"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
     </ScrollView>
-  );
-}
-
-function DefaultActivity() {
-  return (
-    <Activity.Root>
-      <Activity.Header>
-        <Activity.Subject>Biologia</Activity.Subject>
-
-        <Activity.ButtonGroup>
-          <Activity.Button className="bg-green-500">
-            <Octicons name="check" size={22} color={colors.zinc[50]} />
-          </Activity.Button>
-          <Activity.Button className="bg-red-500">
-            <Octicons name="trash" size={22} color={colors.zinc[50]} />
-          </Activity.Button>
-        </Activity.ButtonGroup>
-      </Activity.Header>
-
-      <Activity.Content>
-        <Activity.ContentTitle>Olá Mundo</Activity.ContentTitle>
-      </Activity.Content>
-
-      <Activity.Footer>
-        <Activity.Participants>Sérgio, Mari</Activity.Participants>
-
-        <Activity.Points>7,0pts</Activity.Points>
-      </Activity.Footer>
-    </Activity.Root>
   );
 }

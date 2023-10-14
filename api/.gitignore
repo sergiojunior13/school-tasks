@@ -1,3 +1,5 @@
 config.py
 *.db
 venv
+userdata
+__pycache__

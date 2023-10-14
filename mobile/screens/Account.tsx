@@ -5,7 +5,7 @@ import { AuthContext } from "../context/auth";
 export function Account() {
   const {
     signOut,
-    user: { email, password },
+    user: { email },
   } = useContext(AuthContext);
 
   return (
