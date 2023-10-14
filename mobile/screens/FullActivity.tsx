@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { ScrollView, TouchableOpacity, View, Text } from "react-native";
 
 import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
@@ -7,10 +7,11 @@ import { ActivityData } from "../services/tasks";
 import Octicons from "@expo/vector-icons/Octicons";
 import colors from "tailwindcss/colors";
 import dayjs from "dayjs";
+import { ActivitiesContext } from "../context/activities";
 
 export function FullActivity({
   route: { params: activity },
-  navigation: { goBack, jumpTo, reset },
+  navigation: { goBack, jumpTo },
 }: RootBottomTabNavigation<"full-activity">) {
   const {
     title,
@@ -22,13 +23,15 @@ export function FullActivity({
     deliveryDate,
   }: Readonly<ActivityData> = activity;
 
+  const { removeActivity } = useContext(ActivitiesContext);
+
   return (
     <ScrollView
       keyboardShouldPersistTaps="handled"
       overScrollMode="never"
       contentContainerStyle={{ paddingBottom: 24 }}
     >
-      <View className="pt-3 px-3 space-y-2">
+      <View className="pt-3 px-3">
         <View className="px-2 flex-row items-center justify-between mb-2">
           <View className="flex-row space-x-5 items-center">
             <TouchableOpacity activeOpacity={0.7} onPress={goBack} className="p-4 pl-0">
@@ -59,6 +62,14 @@ export function FullActivity({
           )}
           {points > 0 && <ActivityItem label="Valor">{points} pontos</ActivityItem>}
         </View>
+
+        <TouchableOpacity
+          onPress={() => removeActivity(id).then(goBack)}
+          className="flex-row space-x-3 items-center justify-center rounded-lg bg-red-600 py-4 mt-16"
+        >
+          <Octicons name="trash" color={colors.zinc[50]} size={24} />
+          <Text className="text-xl font-sans-bold text-zinc-50">Excluir</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );

@@ -110,23 +110,29 @@ interface EditActivityParams extends APIActivityData {
   access_token: string;
 }
 
-export async function editActivity(activity: ActivityData) {
+export async function editActivity({
+  id,
+  title,
+  subject,
+  description,
+  deliveryDate,
+  participants,
+  points,
+}: ActivityData) {
   const accessToken = await getAccessTokenInStorage();
 
   const params: EditActivityParams = {
     access_token: accessToken,
 
-    id: activity.id,
-    title: activity.title,
-    description: activity.description,
-    about: activity.subject,
-    date: activity.deliveryDate,
-    members: activity.participants.join(","),
-    value: activity.points,
+    id: id,
+    title: title,
+    description: description,
+    about: subject,
+    date: deliveryDate,
+    members: participants.join(","),
+    value: points,
     members_id: "",
   };
 
   await api.put("/task", null, { params });
-
-  return activity;
 }

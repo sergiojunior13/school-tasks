@@ -55,15 +55,13 @@ export function EditActivity({
     setValue("participants", participants);
   }
 
-  function onSubmit(data: ActivityData) {
+  async function onSubmit(data: ActivityData) {
     if (!data.description) {
       data.description = data.title;
     }
 
-    editActivity(data).then(editedActivity => {
-      changeActivity(editedActivity);
-      goBack();
-    });
+    await changeActivity(data);
+    goBack();
   }
 
   return (

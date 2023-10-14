@@ -50,17 +50,15 @@ export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-a
     setValue("participants", participants);
   }
 
-  function onSubmit(data: ActivityData) {
-    reset();
-
+  async function onSubmit(data: ActivityData) {
     if (!data.description) {
       data.description = data.title;
     }
 
-    createActivity(data).then(addedActivity => {
-      addActivity(addedActivity);
-      navigation.navigate("home");
-    });
+    await addActivity(data);
+    navigation.navigate("home");
+
+    reset();
   }
 
   return (

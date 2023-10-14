@@ -7,7 +7,7 @@ import { RootBottomTabNavigation } from "../../routes/bottom-tab-navigator";
 import * as Activity from "./Activity";
 import * as Modal from "./Modal";
 
-import { ActivityData, deleteActivity } from "../../services/tasks";
+import { ActivityData } from "../../services/tasks";
 import { ActivitiesContext } from "../../context/activities";
 
 import Octicons from "@expo/vector-icons/Octicons";
@@ -55,7 +55,7 @@ export function MountedActivity(activity: ActivityData) {
 }
 
 interface MountedModalProps extends Modal.ModalWithStateProps {
-  removeActivity: (activityIndex: number) => void;
+  removeActivity: (activityIndex: number) => Promise<void>;
   activityId: number;
 }
 
@@ -66,10 +66,9 @@ function MountedModal({
   activityId,
 }: MountedModalProps) {
   async function handleDeleteAcitivity() {
-    await deleteActivity(activityId);
+    await removeActivity(activityId);
 
     setIsModalOpen(false);
-    removeActivity(activityId);
   }
 
   return (
