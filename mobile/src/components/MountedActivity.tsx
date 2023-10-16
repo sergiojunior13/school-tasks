@@ -55,7 +55,7 @@ export function MountedActivity(activity: ActivityData) {
 }
 
 interface MountedModalProps extends Modal.ModalWithStateProps {
-  removeActivity: (activityIndex: number) => Promise<void>;
+  removeActivity: (activityId: number) => Promise<void>;
   activityId: number;
 }
 
@@ -65,7 +65,7 @@ function MountedModal({
   removeActivity,
   activityId,
 }: MountedModalProps) {
-  async function handleDeleteAcitivity() {
+  async function handleDeleteActivity() {
     await removeActivity(activityId);
 
     setIsModalOpen(false);
@@ -87,7 +87,7 @@ function MountedModal({
           <Text className="font-sans-semibold text-lg text-zinc-50">Cancelar</Text>
         </Modal.Button>
         <Modal.Button
-          onPress={handleDeleteAcitivity}
+          onPress={handleDeleteActivity}
           className="bg-red-600 p-4 items-center justify-center rounded-xl"
         >
           <Text className="font-sans-semibold text-lg text-zinc-50">Excluir</Text>

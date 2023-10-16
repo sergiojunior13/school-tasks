@@ -4,7 +4,7 @@ from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
 from fastapi.responses import FileResponse
 from app.validadores.email import validate_email
-from app.basemodel.auth import LogoutModel, ImageModel, AssetsModel, DeleteModel
+from app.basemodel.auth import LogoutModel, ImageModel, AssetsModel, DeleteModel, ReplaceTasksModel
 from config import SECRET
 import sqlite3
 
@@ -295,3 +295,22 @@ def del_task(data: DeleteModel = Depends()):
     return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
                         headers={f"Content-Disposition": f"attachment; "
                                                          f"filename=app/userdata/{token[0]}/tasks/tasks.json"})
+                                                         
+
+import json
+
+@app.post("/tasks")
+def replace_tasks(data: ReplaceTasksModel = Depends()):
+    token = get_data(data)
+    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    arquivo_limpado = open(caminho_arquivo, "w").close()
+
+    new_tasks_to_replace = json.loads(data.new_tasks_to_replace)
+
+    for task in new_tasks_to_replace:
+        task["owner"] = token[1]
+
+    db = TinyDB(caminho_arquivo, indent=4)
+    db.insert_multiple(new_tasks_to_replace)
+
+    return {"status": "done"}

@@ -11,18 +11,7 @@ export interface ActivityData {
   points: number;
 }
 
-interface APIActivityData {
-  id: number;
-  title: string;
-  about: string;
-  description: string;
-  date: string;
-  members: string;
-  members_id: string;
-  value: number;
-}
-
-export async function getAllActivities(): Promise<ActivityData[]> {
+export async function getAllAPIActivities(): Promise<ActivityData[]> {
   const accessToken = await getAccessTokenInStorage();
 
   const params = {
@@ -55,14 +44,7 @@ export async function getAllActivities(): Promise<ActivityData[]> {
   return adaptedActivities;
 }
 
-export async function createActivity({
-  title,
-  description,
-  subject: about,
-  deliveryDate: date,
-  participants: members,
-  points: value,
-}: Omit<ActivityData, "id">) {
+export async function createAPIActivity(activity: Omit<ActivityData, "id">) {
   const accessToken = await getAccessTokenInStorage();
 
   interface ParamsData extends Omit<APIActivityData, "id"> {
@@ -71,35 +53,21 @@ export async function createActivity({
 
   const params: ParamsData = {
     access_token: accessToken,
-    title,
-    about,
-    description,
-    date,
-    members: members.join(","),
-    members_id: "",
-    value,
+    ...transformActivityToAPIActivityData(activity),
   };
 
   const { data } = await api.post("/task", null, { params });
 
   const { id } = data;
 
-  return {
-    title,
-    description,
-    subject: about,
-    deliveryDate: date,
-    participants: members,
-    points: value,
-    id,
-  };
+  return { ...activity, id };
 }
 
-export async function deleteActivity(activityId: number) {
+export async function deleteAPIActivity(activityId: number) {
   const accessToken = await getAccessTokenInStorage();
 
   const params = {
-    id: activityId.toString(),
+    id: activityId,
     access_token: accessToken,
   };
 
@@ -110,21 +78,61 @@ interface EditActivityParams extends APIActivityData {
   access_token: string;
 }
 
-export async function editActivity({
-  id,
-  title,
-  subject,
-  description,
-  deliveryDate,
-  participants,
-  points,
-}: ActivityData) {
+export async function editAPIActivity(activity: ActivityData) {
   const accessToken = await getAccessTokenInStorage();
 
   const params: EditActivityParams = {
     access_token: accessToken,
 
-    id: id,
+    ...transformActivityToAPIActivityData(activity),
+    id: activity.id,
+  };
+
+  await api.put("/task", null, { params });
+}
+
+export async function replaceAllAPIActivitiesWithActivitiesFromStorage(
+  storageActivities: ActivityData[]
+) {
+  const accessToken = await getAccessTokenInStorage();
+
+  const storageActivitiesWithoutId = storageActivities.map(storageActivity => {
+    const activityWithoutId = { ...storageActivity, id: undefined };
+    return activityWithoutId;
+  });
+
+  const activitiesTransformedToAPIActivities = storageActivitiesWithoutId.map(storageActivity =>
+    transformActivityToAPIActivityData(storageActivity)
+  );
+
+  const params = {
+    access_token: accessToken,
+    new_tasks_to_replace: JSON.stringify(activitiesTransformedToAPIActivities),
+  };
+
+  await api.post("/tasks", null, { params });
+}
+
+interface APIActivityData {
+  id: number;
+  title: string;
+  about: string;
+  description: string;
+  date: string;
+  members: string;
+  members_id: string;
+  value: number;
+}
+
+function transformActivityToAPIActivityData({
+  title,
+  subject,
+  points,
+  deliveryDate,
+  description,
+  participants,
+}: ActivityData | Omit<ActivityData, "id">) {
+  return {
     title: title,
     description: description,
     about: subject,
@@ -133,6 +141,4 @@ export async function editActivity({
     value: points,
     members_id: "",
   };
-
-  await api.put("/task", null, { params });
 }

@@ -42,3 +42,7 @@ class UpdateModel(BaseModel):
     members: str = ''
     members_id: str = ''
     value: int = 0
+
+class ReplaceTasksModel(BaseModel):
+    access_token: str
+    new_tasks_to_replace: str

@@ -7,6 +7,7 @@ import {
   registerAccessTokenInStorage,
   registerUserInStorage,
   removeAccessTokenInStorage,
+  removeAllActivitiesInStorage,
   removeUserInStorage,
 } from "../utils/local-storage";
 
@@ -69,12 +70,11 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
 
     await removeAccessTokenInStorage();
     await removeUserInStorage();
+    await removeAllActivitiesInStorage();
   }
 
   return (
-    <AuthContext.Provider
-      value={{ isSigned, signIn, logIn, signOut, user, accessToken }}
-    >
+    <AuthContext.Provider value={{ isSigned, signIn, logIn, signOut, user, accessToken }}>
       {children}
     </AuthContext.Provider>
   );

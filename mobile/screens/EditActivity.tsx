@@ -11,7 +11,7 @@ import * as Modal from "../src/components/Modal";
 
 import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
 
-import { ActivityData, editActivity } from "../services/tasks";
+import { ActivityData, editAPIActivity } from "../services/tasks";
 import { DateInput } from "../src/components/DateInput";
 import { ActivitiesContext } from "../context/activities";
 
