@@ -1,5 +1,5 @@
-import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
   NunitoSans_400Regular,
@@ -9,8 +9,13 @@ import {
 
 import { Routes } from "./routes";
 import { AuthContextProvider } from "./context/auth";
+import { ErrorModalContextProvider } from "./context/error-modal";
+
+import * as SplashScreen from "expo-splash-screen";
 
 import "./utils/dayjs";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   let [fontsLoaded] = useFonts({
@@ -25,9 +30,11 @@ export default function App() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <AuthContextProvider>
-        <Routes />
-      </AuthContextProvider>
+      <ErrorModalContextProvider>
+        <AuthContextProvider>
+          <Routes />
+        </AuthContextProvider>
+      </ErrorModalContextProvider>
 
       <StatusBar style="light" backgroundColor="#18181b" />
     </SafeAreaView>

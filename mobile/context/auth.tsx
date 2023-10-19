@@ -1,4 +1,6 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+
+import * as SplashScreen from "expo-splash-screen";
 
 import { signUp, logUp } from "../services/auth";
 import {
@@ -10,6 +12,8 @@ import {
   removeAllActivitiesInStorage,
   removeUserInStorage,
 } from "../utils/local-storage";
+
+import { ErrorModalContext } from "./error-modal";
 
 export interface UserData {
   email: string;
@@ -36,41 +40,53 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
   const [accessToken, setAccessToken] = useState<string>();
   const [isSigned, setIsSigned] = useState(false);
 
+  const { tryFunctionOrThrowError } = useContext(ErrorModalContext);
+
   useEffect(() => {
-    getAccessTokenInStorage().then(setAccessToken);
-    getUserInStorage()
-      .then(user => {
+    async function loadUserAndAccessToken() {
+      await getAccessTokenInStorage().then(setAccessToken);
+      await getUserInStorage().then(user => {
         setUser(user);
-        return user;
-      })
-      .then(user => setIsSigned(user != null));
+        setIsSigned(user != null);
+      });
+
+      await SplashScreen.hideAsync();
+    }
+
+    tryFunctionOrThrowError(loadUserAndAccessToken);
   }, []);
 
   async function signIn(data: UserData) {
-    const newUser = await signUp(data);
-    await logIn(newUser);
+    await tryFunctionOrThrowError(async () => {
+      const newUser = await signUp(data);
+      await logIn(newUser);
+    });
   }
 
   async function logIn(data: UserData) {
-    const accessToken: string = await logUp(data);
+    await tryFunctionOrThrowError(async () => {
+      const accessToken: string = await logUp(data);
 
-    setAccessToken(accessToken);
-    registerAccessTokenInStorage(accessToken);
+      setAccessToken(accessToken);
+      registerAccessTokenInStorage(accessToken);
 
-    setUser(data);
-    await registerUserInStorage(data);
+      setUser(data);
+      await registerUserInStorage(data);
 
-    setIsSigned(true);
+      setIsSigned(true);
+    });
   }
 
   async function signOut() {
-    setIsSigned(false);
-    setAccessToken(null);
-    setUser(null);
+    await tryFunctionOrThrowError(async () => {
+      setIsSigned(false);
+      setAccessToken(null);
+      setUser(null);
 
-    await removeAccessTokenInStorage();
-    await removeUserInStorage();
-    await removeAllActivitiesInStorage();
+      await removeAccessTokenInStorage();
+      await removeUserInStorage();
+      await removeAllActivitiesInStorage();
+    });
   }
 
   return (

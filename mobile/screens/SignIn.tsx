@@ -24,9 +24,7 @@ export function SignIn({ navigation }: StackScreenProps) {
   } = useForm<FormData>();
 
   function onSubmit(data: FormData) {
-    signIn(data).catch(errorMessage =>
-      setError("email", { message: errorMessage })
-    );
+    signIn(data).catch(errorMessage => setError("email", { message: errorMessage }));
   }
 
   return (
@@ -39,15 +37,12 @@ export function SignIn({ navigation }: StackScreenProps) {
         <Image source={logo} className="w-60 h-10" />
         <View className="mt-10 space-y-8">
           <Text className="text-zinc-50 text-base font-sans-semibold text-center">
-            Gerencie suas atividades escolares, receba notificações e muito
-            mais...
+            Gerencie suas atividades escolares, receba notificações e muito mais...
           </Text>
           <View>
             <Controller
               control={control}
-              render={({ field }) => (
-                <LoginInput {...field} ref={null} errors={errors} />
-              )}
+              render={({ field }) => <LoginInput {...field} ref={null} errors={errors} />}
               name="email"
               rules={{
                 required: "Email é obrigatório",
@@ -59,9 +54,7 @@ export function SignIn({ navigation }: StackScreenProps) {
             />
             <Controller
               control={control}
-              render={({ field }) => (
-                <LoginInput {...field} ref={null} errors={errors} />
-              )}
+              render={({ field }) => <LoginInput {...field} ref={null} errors={errors} />}
               name="password"
               rules={{
                 required: "Senha é obrigatória",
@@ -70,7 +63,7 @@ export function SignIn({ navigation }: StackScreenProps) {
                   value: 8,
                 },
                 maxLength: {
-                  message: "A senha deve ser menor que 8 caracteres",
+                  message: "A senha deve ser menor que 20 caracteres",
                   value: 20,
                 },
               }}
@@ -81,21 +74,14 @@ export function SignIn({ navigation }: StackScreenProps) {
             className="bg-green-500 py-4 rounded-lg"
             onPress={handleSubmit(onSubmit)}
           >
-            <Text className="text-center text-zinc-50 font-sans-bold text-xl">
-              Criar Conta
-            </Text>
+            <Text className="text-center text-zinc-50 font-sans-bold text-xl">Criar Conta</Text>
           </TouchableOpacity>
           <View className="flex-row items-center m-auto">
             <Text className="text-zinc-50 font-sans text-base align-middle">
               Já possui uma conta?{" "}
             </Text>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => navigation.replace("log-in")}
-            >
-              <Text className="text-sky-500 font-sans-bold text-base">
-                Entrar
-              </Text>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.replace("log-in")}>
+              <Text className="text-sky-500 font-sans-bold text-base">Entrar</Text>
             </TouchableOpacity>
           </View>
         </View>

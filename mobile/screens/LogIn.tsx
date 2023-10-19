@@ -44,15 +44,12 @@ export function LogIn({ navigation }: StackScreenProps) {
         <Image source={logo} className="w-60 h-10" />
         <View className="mt-10 space-y-8">
           <Text className="text-zinc-50 text-base font-sans-semibold text-center">
-            Gerencie suas atividades escolares, receba notificações e muito
-            mais...
+            Gerencie suas atividades escolares, receba notificações e muito mais...
           </Text>
           <View>
             <Controller
               control={control}
-              render={({ field }) => (
-                <LoginInput {...field} ref={null} errors={errors} />
-              )}
+              render={({ field }) => <LoginInput {...field} ref={null} errors={errors} />}
               name="email"
               rules={{
                 required: "Email é obrigatório",
@@ -64,9 +61,7 @@ export function LogIn({ navigation }: StackScreenProps) {
             />
             <Controller
               control={control}
-              render={({ field }) => (
-                <LoginInput {...field} ref={null} errors={errors} />
-              )}
+              render={({ field }) => <LoginInput {...field} ref={null} errors={errors} />}
               name="password"
               rules={{
                 required: "Senha é obrigatória",
@@ -75,7 +70,7 @@ export function LogIn({ navigation }: StackScreenProps) {
                   value: 8,
                 },
                 maxLength: {
-                  message: "A senha deve ser menor que 8 caracteres",
+                  message: "A senha deve ser menor que 20 caracteres",
                   value: 20,
                 },
               }}
@@ -86,21 +81,14 @@ export function LogIn({ navigation }: StackScreenProps) {
             className="bg-green-500 py-4 rounded-lg"
             onPress={handleSubmit(onSubmit)}
           >
-            <Text className="text-center text-zinc-50 font-sans-bold text-xl">
-              Entrar
-            </Text>
+            <Text className="text-center text-zinc-50 font-sans-bold text-xl">Entrar</Text>
           </TouchableOpacity>
           <View className="flex-row items-center m-auto">
             <Text className="text-zinc-50 font-sans text-base align-middle">
               Ainda não possui uma conta?{" "}
             </Text>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => navigation.replace("sign-in")}
-            >
-              <Text className="text-sky-500 font-sans-bold text-base">
-                Criar conta
-              </Text>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.replace("sign-in")}>
+              <Text className="text-sky-500 font-sans-bold text-base">Criar conta</Text>
             </TouchableOpacity>
           </View>
         </View>
