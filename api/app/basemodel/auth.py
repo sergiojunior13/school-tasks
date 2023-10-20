@@ -25,7 +25,7 @@ class TasksModel(BaseModel):
     members: str = ''
     members_id: str = ''
     value: int = 0
-
+    status = 'pending'
 
 class DeleteModel(BaseModel):
     access_token: str
@@ -42,6 +42,7 @@ class UpdateModel(BaseModel):
     members: str = ''
     members_id: str = ''
     value: int = 0
+    status: str = ''
 
 class ReplaceTasksModel(BaseModel):
     access_token: str

@@ -218,7 +218,7 @@ from tinydb import TinyDB
 @app.post("/task")
 def upload_task(data: TasksModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
 
     if not os.path.exists(caminho_arquivo):
         diretorio = os.path.dirname(caminho_arquivo)
@@ -245,7 +245,7 @@ def upload_task(data: TasksModel = Depends()):
 @app.get("/task")
 def get_task(data: LogoutModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
 
     if not os.path.exists(caminho_arquivo):
         diretorio = os.path.dirname(caminho_arquivo)
@@ -253,10 +253,10 @@ def get_task(data: LogoutModel = Depends()):
         arquivo = open(caminho_arquivo, "x")
         arquivo.close()
 
-    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+    return FileResponse(f"app/userdata/{token[1]}/tasks/tasks.json",
                         headers={
                             f"Content-Disposition": f"attachment;"
-                                                    f" filename=app/userdata/{token[0]}/tasks/tasks.json"})
+                                                    f" filename=app/userdata/{token[1]}/tasks/tasks.json"})
 
 
 from app.basemodel.auth import UpdateModel
@@ -265,7 +265,7 @@ from app.basemodel.auth import UpdateModel
 @app.put("/task")
 def update_task(data: UpdateModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
     db = TinyDB(caminho_arquivo, indent=4)
 
     db.update(
@@ -281,20 +281,20 @@ def update_task(data: UpdateModel = Depends()):
         },
         doc_ids=[data.id]
     )
-    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+    return FileResponse(f"app/userdata/{token[1]}/tasks/tasks.json",
                         headers={f"Content-Disposition": f"attachment;"
-                                                         f" filename=app/userdata/{token[0]}/tasks/tasks.json"})
+                                                         f" filename=app/userdata/{token[1]}/tasks/tasks.json"})
 
 
 @app.delete("/task")
 def del_task(data: DeleteModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
     db = TinyDB(caminho_arquivo, indent=4)
     db.remove(doc_ids=[data.id])
-    return FileResponse(f"app/userdata/{token[0]}/tasks/tasks.json",
+    return FileResponse(f"app/userdata/{token[1]}/tasks/tasks.json",
                         headers={f"Content-Disposition": f"attachment; "
-                                                         f"filename=app/userdata/{token[0]}/tasks/tasks.json"})
+                                                         f"filename=app/userdata/{token[1]}/tasks/tasks.json"})
                                                          
 
 import json
@@ -302,7 +302,7 @@ import json
 @app.post("/tasks")
 def replace_tasks(data: ReplaceTasksModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[0]}/tasks/tasks.json"
+    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
     arquivo_limpado = open(caminho_arquivo, "w").close()
 
     new_tasks_to_replace = json.loads(data.new_tasks_to_replace)
