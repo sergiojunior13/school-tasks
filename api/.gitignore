@@ -3,3 +3,4 @@ config.py
 venv
 userdata
 __pycache__
+db.py
