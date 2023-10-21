@@ -1,31 +1,40 @@
-from fastapi import FastAPI, Depends, File, UploadFile, HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_login import LoginManager
 from fastapi_login.exceptions import InvalidCredentialsException
-from fastapi.responses import FileResponse
 from app.validadores.email import validate_email
-from app.basemodel.auth import LogoutModel, ImageModel, AssetsModel, DeleteModel, ReplaceTasksModel
-from config import SECRET
-import sqlite3
+from app.basemodel.auth import LogoutModel, DeleteModel, ReplaceTasksModel
+from config import SECRET, DB_ADDRESS
+import psycopg2
 
 app = FastAPI()
 
 manager = LoginManager(SECRET, token_url='/auth/token')
 
+
 def get_data(model):
-    with sqlite3.connect('mydatabase.db') as conn:
+    with psycopg2.connect(DB_ADDRESS) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM devices WHERE access_token=?", (model.access_token,))
-    return cursor.fetchone()
+        cursor.execute("SELECT * FROM devices WHERE access_token=%s", (model.access_token,))
+        conn.commit()
+    
+    lines = cursor.fetchone()
+    cursor.close()
+    
+    return lines
 
 
 # Função para carregar o usuário do banco de dados
 @manager.user_loader()
 def load_user(email: str):
-    with sqlite3.connect('mydatabase.db') as conn:
+    with psycopg2.connect(DB_ADDRESS) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE email=?", (email,))
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
         user = cursor.fetchone()
+        
+    conn.commit()
+    cursor.close()
+    
     return user
 
 
@@ -44,12 +53,13 @@ def login(device_name: str, data: OAuth2PasswordRequestForm = Depends()):
 
     access_token = manager.create_access_token(data=dict(sub=email))
 
-    with sqlite3.connect('mydatabase.db') as conn:
+    with psycopg2.connect(DB_ADDRESS) as conn:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO devices (user_id, device_name, access_token) VALUES (?, ?, ?)",
+        cursor.execute("INSERT INTO devices (user_id, device_name, access_token) VALUES (%s, %s, %s)",
                        (user[0], device_name, access_token))
         conn.commit()
 
+    cursor.close()
     return {
         'access_token': access_token,
     }
@@ -77,187 +87,91 @@ def signup(data: OAuth2PasswordRequestForm = Depends()):
     elif len(password) > 20:
         raise HTTPException(status_code=420, detail="Password must be no longer than 20 characters")
 
-    with sqlite3.connect('mydatabase.db') as conn:
+    with psycopg2.connect(DB_ADDRESS) as conn:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, password))
+        cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", (username, email, password))
         conn.commit()
 
-    return {
-        'status': 'done'
-    }
+    cursor.close()
 
 
 @app.post("/logout")
 def logout(data: LogoutModel = Depends()):
-    with sqlite3.connect('mydatabase.db') as conn:
+    with psycopg2.connect(DB_ADDRESS) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT 1 FROM devices WHERE access_token=?", (data.access_token,))
+        cursor.execute("SELECT 1 FROM devices WHERE access_token=%s", (data.access_token,))
         token = cursor.fetchone()
         if not token:
             return {
                 "status": "not found"
             }
-        cursor.execute("DELETE FROM devices WHERE access_token=?", (data.access_token,))
+        cursor.execute("DELETE FROM devices WHERE access_token=%s", (data.access_token,))
         conn.commit()
         cursor.close()
-    conn.close()
+        
     return {
         "status": "disconnected"
     }
 
 
-import shutil
-import os
-
-
-@app.post("/image")
-async def upload_image(image: UploadFile = File(...), data: ImageModel = Depends()):
-
-    MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
-    if image.file.tell() > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(status_code=413, detail="File is too large. 5 MB limit.")
-
-    token = get_data(data)
-    base_directory = "app/userdata"
-    user_directory = os.path.join(base_directory, str(token[1]))
-    images_directory = os.path.join(user_directory, f"{data.session}/images")
-    os.makedirs(images_directory, exist_ok=True)
-    base_filename = "IMG"
-    counter = 0
-
-    while True:
-        filename = f"{base_filename}_{counter}.png"
-        file_path = os.path.join(images_directory, filename)
-        if not os.path.exists(file_path):
-            break
-        counter += 1
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(image.file, buffer)
-
-    return {
-        "status": "done"
-    }
-
-
-@app.delete("/image")
-def delete_image(data: ImageModel = Depends()):
-    token = get_data(data)
-    position = os.listdir(f"app/userdata/{token[1]}/{data.session}/images")
-    position = position[data.position]
-    image_path = f"app/userdata/{token[1]}/{data.session}/images/{position}"
-    if os.path.exists(image_path):
-        os.remove(image_path)
-        return {
-            "status": "done"
-        }
-
-    else:
-        raise HTTPException(status_code=404, detail="Image not found!")
-
-
-@app.get("/image")
-def get_image(data: ImageModel = Depends()):
-    token = get_data(data)
-    position = os.listdir(f"app/userdata/{token[1]}/{data.session}/images")
-    position = position[data.position]
-    image_path = f"app/userdata/{token[1]}/{data.session}/images/{position}"
-    return FileResponse(image_path, media_type="image/png")
-
-
-@app.post("/app/file")
-def post_main_files(data: AssetsModel = Depends(), file: UploadFile = File(...)):
-    directory = os.path.join(f"app/assets/{data.session}")
-    os.makedirs(directory, exist_ok=True)
-    counter = 0
-
-    while True:
-        filename = data.filename
-        file_path = os.path.join(directory, filename)
-        if not os.path.exists(file_path):
-            break
-        counter += 1
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return {
-        "status": "done"
-    }
-
-
-@app.delete("/app/file")
-def delete_main_files(data: AssetsModel = Depends()):
-    path = f"app/assets/{data.session}/{data.filename}"
-    if os.path.exists(path):
-        os.remove(path)
-        return {
-            "status": "done"
-        }
-
-    else:
-        return {
-            "status": "not found"
-        }
-
-
-import mimetypes
-
-
-@app.get("/app/file")
-def get_main_files(data: AssetsModel = Depends()):
-    path = f"app/assets/{data.session}/{data.filename}"
-    mime_type, encoding = mimetypes.guess_type(path)
-    return FileResponse(path, media_type=mime_type)
-
-
 from app.basemodel.auth import TasksModel
-from tinydb import TinyDB
 
 
 @app.post("/task")
 def upload_task(data: TasksModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
-
-    if not os.path.exists(caminho_arquivo):
-        diretorio = os.path.dirname(caminho_arquivo)
-        os.makedirs(diretorio, exist_ok=True)
-        arquivo = open(caminho_arquivo, "x")
-        arquivo.close()
-
-    db = TinyDB(caminho_arquivo, indent=4)
-
-    task_id = db.insert({
-        "owner": token[1],
-        "members": data.members,
-        "members_id": data.members_id,
-        "title": data.title,
-        "about": data.about,
-        "description": data.description,
-        "date": data.date,
-        "value": data.value,
-        "status": data.status
-    })
-
-    return {"id": task_id}
-
+    token = token[1]
+    with psycopg2.connect(DB_ADDRESS) as conn:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO tasks (user_id, title, about, description, value, members, date, status) VALUES ("
+                       "%s, %s, %s, %s, %s, %s, %s, %s)",
+                       (int(token), data.title, data.about, data.description,
+                        int(data.value), data.members, data.date, data.status))
+        conn.commit()
+    
+    cursor.execute('''
+            SELECT * FROM tasks WHERE user_id=%s
+        ''',
+        (token,)
+    )
+    
+    id = len(cursor.fetchall())
+    
+    conn.commit()
+    cursor.close()
+    
+    return {
+        'id' : id
+    }
 
 @app.get("/task")
 def get_task(data: LogoutModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
+    token = token[1]
+    conn = psycopg2.connect(DB_ADDRESS)
+    cursor = conn.cursor()
 
-    if not os.path.exists(caminho_arquivo):
-        diretorio = os.path.dirname(caminho_arquivo)
-        os.makedirs(diretorio, exist_ok=True)
-        arquivo = open(caminho_arquivo, "x")
-        arquivo.close()
+    cursor.execute('''SELECT * FROM tasks WHERE user_id=%s''', (token,))
+    data = cursor.fetchall()
+    resultado = {'_default': {}}
 
-    return FileResponse(f"app/userdata/{token[1]}/tasks/tasks.json",
-                        headers={
-                            f"Content-Disposition": f"attachment;"
-                                                    f" filename=app/userdata/{token[1]}/tasks/tasks.json"})
+    for item in data:
+        task_id = item[0]
+        resultado['_default'][task_id] = {
+            'owner': item[1],
+            'title': item[2],
+            'about': item[3],
+            'description': item[4],
+            'value': item[5],
+            'members': item[6],
+            'date': item[7],
+            'status': item[8]
+        }
+    
+    conn.commit()
+    cursor.close()
+    
+    return resultado
 
 
 from app.basemodel.auth import UpdateModel
@@ -265,39 +179,50 @@ from app.basemodel.auth import UpdateModel
 
 @app.put("/task")
 def update_task(data: UpdateModel = Depends()):
-    token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
-    db = TinyDB(caminho_arquivo, indent=4)
+    conn = psycopg2.connect(DB_ADDRESS)
+    cursor = conn.cursor()
 
-    db.update(
-        {
-            "owner": token[1],
-            "members": data.members,
-            "members_id": data.members_id,
-            "title": data.title,
-            "about": data.about,
-            "description": data.description,
-            "value": data.value,
-            "date": data.date,
-            "status": data.status
-        },
-        doc_ids=[data.id]
-    )
-    return FileResponse(f"app/userdata/{token[1]}/tasks/tasks.json",
-                        headers={f"Content-Disposition": f"attachment;"
-                                                         f" filename=app/userdata/{token[1]}/tasks/tasks.json"})
+    cursor.execute('''
+        UPDATE tasks 
+        SET title=%s,
+            about=%s,
+            description=%s,
+            value=%s,
+            members=%s,
+            date=%s,
+            status=%s
+        WHERE task_id=%s
+    ''',
+                   (
+                       data.title,
+                       data.about,
+                       data.description,
+                       data.value,
+                       data.members,
+                       data.date,
+                       data.status,
+                       data.id
+                   )
+                   )
+    conn.commit()
+    cursor.close()
 
 
 @app.delete("/task")
 def del_task(data: DeleteModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
-    db = TinyDB(caminho_arquivo, indent=4)
-    db.remove(doc_ids=[data.id])
-    return FileResponse(f"app/userdata/{token[1]}/tasks/tasks.json",
-                        headers={f"Content-Disposition": f"attachment; "
-                                                         f"filename=app/userdata/{token[1]}/tasks/tasks.json"})
-                                                         
+    token = token[1]
+    conn = psycopg2.connect(DB_ADDRESS)
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        '''
+            DELETE FROM tasks WHERE task_id=%s
+        ''', (data.id,)
+    )
+    conn.commit()
+    cursor.close()
+
 
 import json
 
@@ -305,15 +230,24 @@ import json
 @app.post("/tasks")
 def replace_tasks(data: ReplaceTasksModel = Depends()):
     token = get_data(data)
-    caminho_arquivo = f"app/userdata/{token[1]}/tasks/tasks.json"
-    arquivo_limpado = open(caminho_arquivo, "w").close()
-
+    token = token[1]
     new_tasks_to_replace = json.loads(data.new_tasks_to_replace)
 
+    conn = psycopg2.connect(DB_ADDRESS)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+            DELETE FROM tasks WHERE user_id=%s
+        ''', (token,)
+    )
+
+    conn.commit()
+
     for task in new_tasks_to_replace:
-        task["owner"] = token[1]
-
-    db = TinyDB(caminho_arquivo, indent=4)
-    db.insert_multiple(new_tasks_to_replace)
-
-    return {"status": "done"}
+        cursor.execute("INSERT INTO tasks (user_id, title, about, description, value, members, date, status) VALUES ("
+                       "%s, %s, %s, %s, %s, %s, %s, %s)",
+                       (token, task['title'], task['about'], task['description'],
+                        task['value'], task['members'], task['date'], task['status']))
+        conn.commit()
+        
+    cursor.close()
