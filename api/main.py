@@ -17,7 +17,11 @@ def get_data(model):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM devices WHERE access_token=%s", (model.access_token,))
         conn.commit()
-    return cursor.fetchone()
+    
+    lines = cursor.fetchone()
+    cursor.close()
+    
+    return lines
 
 
 # Função para carregar o usuário do banco de dados
@@ -27,6 +31,10 @@ def load_user(email: str):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
         user = cursor.fetchone()
+        
+    conn.commit()
+    cursor.close()
+    
     return user
 
 
@@ -51,6 +59,7 @@ def login(device_name: str, data: OAuth2PasswordRequestForm = Depends()):
                        (user[0], device_name, access_token))
         conn.commit()
 
+    cursor.close()
     return {
         'access_token': access_token,
     }
@@ -83,6 +92,8 @@ def signup(data: OAuth2PasswordRequestForm = Depends()):
         cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)", (username, email, password))
         conn.commit()
 
+    cursor.close()
+
 
 @app.post("/logout")
 def logout(data: LogoutModel = Depends()):
@@ -97,16 +108,13 @@ def logout(data: LogoutModel = Depends()):
         cursor.execute("DELETE FROM devices WHERE access_token=%s", (data.access_token,))
         conn.commit()
         cursor.close()
-    conn.close()
+        
     return {
         "status": "disconnected"
     }
 
 
 from app.basemodel.auth import TasksModel
-
-
-# from tinydb import TinyDB
 
 
 @app.post("/task")
@@ -117,10 +125,24 @@ def upload_task(data: TasksModel = Depends()):
         cursor = conn.cursor()
         cursor.execute("INSERT INTO tasks (user_id, title, about, description, value, members, date, status) VALUES ("
                        "%s, %s, %s, %s, %s, %s, %s, %s)",
-                       (token, data.title, data.about, data.description,
-                        data.value, data.members, data.date, data.status))
+                       (int(token), data.title, data.about, data.description,
+                        int(data.value), data.members, data.date, data.status))
         conn.commit()
-
+    
+    cursor.execute('''
+            SELECT * FROM tasks WHERE user_id=%s
+        ''',
+        (token,)
+    )
+    
+    id = len(cursor.fetchall())
+    
+    conn.commit()
+    cursor.close()
+    
+    return {
+        'id' : id
+    }
 
 @app.get("/task")
 def get_task(data: LogoutModel = Depends()):
@@ -145,6 +167,10 @@ def get_task(data: LogoutModel = Depends()):
             'date': item[7],
             'status': item[8]
         }
+    
+    conn.commit()
+    cursor.close()
+    
     return resultado
 
 
@@ -178,6 +204,8 @@ def update_task(data: UpdateModel = Depends()):
                        data.id
                    )
                    )
+    conn.commit()
+    cursor.close()
 
 
 @app.delete("/task")
@@ -186,16 +214,11 @@ def del_task(data: DeleteModel = Depends()):
     token = token[1]
     conn = psycopg2.connect(DB_ADDRESS)
     cursor = conn.cursor()
-
-    cursor.execute('''SELECT * FROM tasks WHERE user_id=%s''', (token,))
-    datas = cursor.fetchall()
-    datas = datas[data.id]
-    index = datas[0] - 1
-
+    
     cursor.execute(
         '''
             DELETE FROM tasks WHERE task_id=%s
-        ''', (index,)
+        ''', (data.id,)
     )
     conn.commit()
     cursor.close()
@@ -221,9 +244,10 @@ def replace_tasks(data: ReplaceTasksModel = Depends()):
     conn.commit()
 
     for task in new_tasks_to_replace:
-        cursor = conn.cursor()
         cursor.execute("INSERT INTO tasks (user_id, title, about, description, value, members, date, status) VALUES ("
                        "%s, %s, %s, %s, %s, %s, %s, %s)",
                        (token, task['title'], task['about'], task['description'],
                         task['value'], task['members'], task['date'], task['status']))
         conn.commit()
+        
+    cursor.close()
