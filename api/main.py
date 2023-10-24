@@ -249,7 +249,7 @@ def replace_tasks(data: ReplaceTasksModel = Depends()):
                 pass
         except:
             task['status'] = ''
-            print("DEU ERRO E FOI SOLUCIONADO")
+            
         cursor.execute("INSERT INTO tasks (user_id, title, about, description, value, members, date, status) VALUES ("
                        "%s, %s, %s, %s, %s, %s, %s, %s)",
                        (token, task['title'], task['about'], task['description'],
