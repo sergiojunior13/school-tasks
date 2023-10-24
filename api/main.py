@@ -244,6 +244,12 @@ def replace_tasks(data: ReplaceTasksModel = Depends()):
     conn.commit()
 
     for task in new_tasks_to_replace:
+        try:
+            if task['status']:
+                pass
+        except:
+            task['status'] = ''
+            
         cursor.execute("INSERT INTO tasks (user_id, title, about, description, value, members, date, status) VALUES ("
                        "%s, %s, %s, %s, %s, %s, %s, %s)",
                        (token, task['title'], task['about'], task['description'],
