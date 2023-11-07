@@ -1,6 +1,7 @@
 import { TouchableOpacity, TouchableOpacityProps, View, Text } from "react-native";
 import Octicons from "@expo/vector-icons/Octicons";
 import colors from "tailwindcss/colors";
+import { TextProps } from "react-native/Libraries/Text/Text";
 
 interface ActivityProps {
   children: React.ReactNode;
@@ -24,7 +25,29 @@ export function Header({ children }: ActivityProps) {
 
 export function Subject({ children }: ActivityProps) {
   return (
-    <Text className="px-3 py-1 font-sans bg-emerald-600 rounded-full justify-center items-center text-zinc-50 capitalize">
+    <View className="max-w-[130px]">
+      <Text
+        numberOfLines={1}
+        className="px-3 py-1 font-sans bg-emerald-600 rounded-full justify-center items-center text-zinc-50 capitalize"
+      >
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+export function AlertContainer({ children }: ActivityProps) {
+  return <View className="flex-row items-center">{children}</View>;
+}
+
+export function Alert({ children }: TextProps) {
+  return (
+    <Text
+      className={
+        (children === "• Atrasada" ? "text-red-500" : "text-emerald-500") +
+        " ml-2 text-base font-sans-bold"
+      }
+    >
       {children}
     </Text>
   );

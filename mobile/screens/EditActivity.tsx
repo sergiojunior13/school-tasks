@@ -14,6 +14,7 @@ import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
 import { ActivityData, editAPIActivity } from "../services/tasks";
 import { DateInput } from "../src/components/DateInput";
 import { ActivitiesContext } from "../context/activities";
+import { LoadingButton } from "../src/components/LoadingButton";
 
 export function EditActivity({
   navigation: { goBack },
@@ -23,12 +24,11 @@ export function EditActivity({
 
   const {
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     handleSubmit,
     getValues,
     watch,
     setValue,
-    reset,
   } = useForm<ActivityData>({
     defaultValues: {
       ...activity,
@@ -55,12 +55,14 @@ export function EditActivity({
     setValue("participants", participants);
   }
 
-  async function onSubmit(data: ActivityData) {
-    if (!data.description) {
-      data.description = data.title;
+  async function onSubmit(activityData: ActivityData) {
+    if (!activityData.description) {
+      activityData.description = activityData.title;
     }
 
-    await changeActivity(data);
+    activityData.status = activity.status;
+
+    await changeActivity(activityData);
     goBack();
   }
 
@@ -159,14 +161,15 @@ export function EditActivity({
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity
+          <LoadingButton
             activeOpacity={0.7}
             onPress={handleSubmit(onSubmit)}
             className="bg-green-600 rounded-xl justify-center items-center flex-row space-x-2 py-3"
+            isLoading={isSubmitting}
           >
             <Octicons name="pencil" color={colors.zinc[50]} size={24} />
             <Text className="text-zinc-50 font-sans-semibold text-xl">Editar Atividade</Text>
-          </TouchableOpacity>
+          </LoadingButton>
         </View>
       </View>
     </ScrollView>

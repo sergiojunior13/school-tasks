@@ -4,11 +4,8 @@ import { ActivityData } from "../services/tasks";
 
 const ACCESS_TOKEN_KEY = "access_token";
 const USER_KEY = "user";
-
 const ACTIVITIES_KEY = "activities";
-// const ACTIVITIES_ID_FROM_NOT_MADE_DELETE_REQUESTS_KEY = "not_made_delete_requests";
-// const ACTIVITIES_DATA_FROM_NOT_MADE_PUT_REQUESTS_KEY = "not_made_put_requests";
-// const ACTIVITIES_DATA_FROM_NOT_MADE_POST_REQUESTS_KEY = "not_made_post_requests";
+const LOGOUT_REQUEST_KEY = "logout_request";
 
 export async function getAccessTokenInStorage() {
   return await getItemAsync(ACCESS_TOKEN_KEY);
@@ -71,26 +68,13 @@ export async function editActivityInStorage(activity: ActivityData) {
   await registerActivitiesInStorage(changedActivities);
 }
 
-// export async function addActivityDataFromNotMadePostRequest(activity: ActivityData[]) {
-//   const activitiesDataFromNotMadePostRequests = await getItemAsync(
-//     ACTIVITIES_DATA_FROM_NOT_MADE_POST_REQUESTS_KEY
-//   );
-//   const newActivitiesData = [...activitiesDataFromNotMadePostRequests, activity];
+export async function registerLogOutRequestInStorage() {
+  const sessionAccessToken = await getAccessTokenInStorage();
 
-//   await setItemAsync(
-//     ACTIVITIES_DATA_FROM_NOT_MADE_POST_REQUESTS_KEY,
-//     JSON.stringify(newActivitiesData)
-//   );
-// }
+  await setItemAsync(LOGOUT_REQUEST_KEY, sessionAccessToken);
+}
 
-// export async function addActivityDataFromNotMadePostRequest(activity: ActivityData[]) {
-//   const activitiesDataFromNotMadePostRequests = await getItemAsync(
-//     ACTIVITIES_DATA_FROM_NOT_MADE_POST_REQUESTS_KEY
-//   );
-//   const newActivitiesData = [...activitiesDataFromNotMadePostRequests, activity];
-
-//   await setItemAsync(
-//     ACTIVITIES_DATA_FROM_NOT_MADE_POST_REQUESTS_KEY,
-//     JSON.stringify(newActivitiesData)
-//   );
-// }
+export async function getPendingLogOutRequestAccessTokenInStorage() {
+  const pendingLogOutRequestAccessToken = await getItemAsync(LOGOUT_REQUEST_KEY);
+  return pendingLogOutRequestAccessToken;
+}

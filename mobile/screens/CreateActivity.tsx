@@ -14,11 +14,12 @@ import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
 import { ActivityData } from "../services/tasks";
 import { DateInput } from "../src/components/DateInput";
 import { ActivitiesContext } from "../context/activities";
+import { LoadingButton } from "../src/components/LoadingButton";
 
 export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-activity">) {
   const {
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     handleSubmit,
     getValues,
     watch,
@@ -50,12 +51,14 @@ export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-a
     setValue("participants", participants);
   }
 
-  async function onSubmit(data: ActivityData) {
-    if (!data.description) {
-      data.description = data.title;
+  async function onSubmit(activityData: ActivityData) {
+    if (!activityData.description) {
+      activityData.description = activityData.title;
     }
 
-    await addActivity(data);
+    activityData.status = "pending";
+
+    await addActivity(activityData);
     navigation.navigate("home");
 
     reset();
@@ -156,13 +159,13 @@ export function CreateActivity({ navigation }: RootBottomTabNavigation<"create-a
               </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity
-            activeOpacity={0.7}
+          <LoadingButton
             onPress={handleSubmit(onSubmit)}
             className="bg-green-600 rounded-xl justify-center items-center py-3"
+            isLoading={isSubmitting}
           >
             <Text className="text-zinc-50 font-sans-semibold text-xl">Criar Atividade</Text>
-          </TouchableOpacity>
+          </LoadingButton>
         </View>
       </View>
     </ScrollView>

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { ScrollView, TouchableOpacity, View, Text } from "react-native";
 
 import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
@@ -8,6 +8,7 @@ import Octicons from "@expo/vector-icons/Octicons";
 import colors from "tailwindcss/colors";
 import dayjs from "dayjs";
 import { ActivitiesContext } from "../context/activities";
+import { LoadingButton } from "../src/components/LoadingButton";
 
 export function FullActivity({
   route: { params: activity },
@@ -21,9 +22,30 @@ export function FullActivity({
     id,
     points,
     deliveryDate,
+    status,
   }: Readonly<ActivityData> = activity;
 
-  const { removeActivity } = useContext(ActivitiesContext);
+  const { removeActivity, finalizeActivity } = useContext(ActivitiesContext);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
+  async function handlePressDeleteButton() {
+    setIsDeleting(true);
+
+    await removeActivity(id);
+
+    setIsDeleting(false);
+    goBack();
+  }
+  async function handlePressFinalizeButton() {
+    setIsFinalizing(true);
+
+    await finalizeActivity(activity);
+
+    setIsFinalizing(false);
+    goBack();
+  }
 
   return (
     <ScrollView
@@ -63,13 +85,25 @@ export function FullActivity({
           {points > 0 && <ActivityItem label="Valor">{points} pontos</ActivityItem>}
         </View>
 
-        <TouchableOpacity
-          onPress={() => removeActivity(id).then(goBack)}
+        <LoadingButton
+          onPress={handlePressDeleteButton}
           className="flex-row space-x-3 items-center justify-center rounded-lg bg-red-600 py-4 mt-16"
+          isLoading={isDeleting}
         >
           <Octicons name="trash" color={colors.zinc[50]} size={24} />
           <Text className="text-xl font-sans-bold text-zinc-50">Excluir</Text>
-        </TouchableOpacity>
+        </LoadingButton>
+
+        {status === "pending" && (
+          <LoadingButton
+            onPress={handlePressFinalizeButton}
+            className="flex-row space-x-3 items-center justify-center rounded-lg bg-green-600 py-4 mt-4"
+            isLoading={isFinalizing}
+          >
+            <Octicons name="check" color={colors.zinc[50]} size={24} />
+            <Text className="text-xl font-sans-bold text-zinc-50">Finalizar</Text>
+          </LoadingButton>
+        )}
       </View>
     </ScrollView>
   );

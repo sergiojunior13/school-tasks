@@ -4,10 +4,9 @@ import { Header } from "../src/components/Header";
 
 import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
 
-import {
-  ListOfActivities,
-  calculateDiffOfDateAndTodayInDays,
-} from "../src/components/ListOfActivities";
+import { ListOfActivities } from "../src/components/ListOfActivities";
+
+import { calculateDiffOfDateAndTodayInDays } from "../utils/date";
 
 function filterTodayAndTomorrowActivities(activityDate: string) {
   const differenceOfDays = calculateDiffOfDateAndTodayInDays(activityDate);
@@ -34,6 +33,7 @@ export function Home({ navigation }: RootBottomTabNavigation<"home">) {
             navigation={navigation}
             filterActivitiesFunction={filterTodayAndTomorrowActivities}
             showAllActivitiesButton
+            customNoActivitiesText=" Você ainda não tem nenhuma atividade registrada para hoje/amanhã."
           />
         </View>
       </View>

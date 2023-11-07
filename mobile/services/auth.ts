@@ -2,6 +2,7 @@ import { RawAxiosRequestHeaders } from "axios";
 import { api } from "../utils/axios";
 
 import { deviceName } from "expo-device";
+import { getAccessTokenInStorage } from "../utils/local-storage";
 
 interface SignUpData {
   email: string;
@@ -39,4 +40,16 @@ export async function logUp({ email, password }: SignUpData) {
   if (!response) return "Email ou senha inválidos";
 
   return response.data.access_token;
+}
+
+export async function logOut(pendingLogOutRequestAccessToken?: string) {
+  const accessToken = pendingLogOutRequestAccessToken
+    ? pendingLogOutRequestAccessToken
+    : await getAccessTokenInStorage();
+
+  const params = {
+    access_token: accessToken,
+  };
+
+  await api.post("/logout", null, { params });
 }

@@ -12,6 +12,7 @@ import { FormData } from "./LogIn";
 import { useForm, Controller } from "react-hook-form";
 
 import { StackScreenProps } from "../routes/stack-navigator";
+import { LoadingButton } from "../src/components/LoadingButton";
 
 export function SignIn({ navigation }: StackScreenProps) {
   const { signIn } = useContext(AuthContext);
@@ -19,12 +20,12 @@ export function SignIn({ navigation }: StackScreenProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     setError,
   } = useForm<FormData>();
 
-  function onSubmit(data: FormData) {
-    signIn(data).catch(errorMessage => setError("email", { message: errorMessage }));
+  async function onSubmit(data: FormData) {
+    await signIn(data).catch(errorMessage => setError("email", { message: errorMessage }));
   }
 
   return (
@@ -69,13 +70,14 @@ export function SignIn({ navigation }: StackScreenProps) {
               }}
             />
           </View>
-          <TouchableOpacity
+          <LoadingButton
             activeOpacity={0.7}
-            className="bg-green-500 py-4 rounded-lg"
+            className="bg-green-500 py-4 rounded-lg justify-center"
             onPress={handleSubmit(onSubmit)}
+            isLoading={isSubmitting}
           >
             <Text className="text-center text-zinc-50 font-sans-bold text-xl">Criar Conta</Text>
-          </TouchableOpacity>
+          </LoadingButton>
           <View className="flex-row items-center m-auto">
             <Text className="text-zinc-50 font-sans text-base align-middle">
               Já possui uma conta?{" "}

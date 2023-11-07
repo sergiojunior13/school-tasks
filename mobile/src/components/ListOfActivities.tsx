@@ -1,61 +1,48 @@
-import { useContext } from "react";
-import { View, TouchableOpacity, Text } from "react-native";
+import { useContext, useState } from "react";
+import { View, TouchableOpacity, Text, ActivityIndicator } from "react-native";
 
 import { RootBottomTabNavigation } from "../../routes/bottom-tab-navigator";
 import { ActivitiesContext } from "../../context/activities";
 import { MountedActivity } from "./MountedActivity";
 
 import * as Day from "../components/Day";
+import * as Modal from "./Modal";
+
+import { ActivityData } from "../../services/tasks";
+
+import { formatDate, sortDatesByDate } from "../../utils/date";
 
 import dayjs from "dayjs";
-
-function sortDatesByDate(dates: string[]) {
-  return dates.sort((date1, date2) => {
-    const dateA = dayjs(date1);
-    const dateB = dayjs(date2);
-
-    if (dateA.isBefore(dateB)) {
-      return -1;
-    } else if (dateA.isAfter(dateB)) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-}
-
-function formatDate(date: string) {
-  const differenceOfDateAndTodayInDays = calculateDiffOfDateAndTodayInDays(date);
-
-  switch (differenceOfDateAndTodayInDays) {
-    case 1:
-      return "Amanhã";
-    case 0:
-      return "Hoje";
-    case -1:
-      return "Ontem";
-    default:
-      return dayjs(date).format("DD/MM");
-  }
-}
-
-export function calculateDiffOfDateAndTodayInDays(date: string) {
-  const startOfTodayDate = dayjs().startOf("day");
-  return dayjs(date).diff(startOfTodayDate, "day");
-}
+import colors from "tailwindcss/colors";
+import { LoadingButton } from "./LoadingButton";
 
 interface ListOfActivities {
   navigation: RootBottomTabNavigation<any>["navigation"];
   showAllActivitiesButton?: boolean;
   filterActivitiesFunction?: (value: string, index?: number, array?: string[]) => boolean;
+  customNoActivitiesText?: string;
 }
 
 export function ListOfActivities({
   navigation,
   showAllActivitiesButton = false,
   filterActivitiesFunction,
+  customNoActivitiesText = "Você ainda não tem nenhuma atividade registrada.",
 }: ListOfActivities) {
-  const { activities } = useContext(ActivitiesContext);
+  const [activityToRemoveId, setActivityToRemoveId] = useState<number>();
+  const [activityToFinalize, setActivityToFinalize] = useState<ActivityData>();
+
+  function openDeleteActivityModal(activityId: number) {
+    setActivityToRemoveId(activityId);
+  }
+
+  function openFinalizeActivityModal(activity: ActivityData) {
+    setActivityToFinalize(activity);
+  }
+
+  const { removeActivity, finalizeActivity } = useContext(ActivitiesContext);
+
+  const { activities, isActivitiesLoading } = useContext(ActivitiesContext);
 
   const activitiesDate = activities.map(activity => activity.deliveryDate);
 
@@ -70,27 +57,29 @@ export function ListOfActivities({
     <View key={date + index}>
       <Day.Root>
         <Day.Date>{dayjs(date).format("DD/MM/YY")}</Day.Date>
-        <Day.AlertContainer>
-          <Day.Content>{formatDate(date)}</Day.Content>
-          {calculateDiffOfDateAndTodayInDays(date) < 0 && <Day.Alert>• Atrasado</Day.Alert>}
-        </Day.AlertContainer>
+
+        <Day.Content>{formatDate(date)}</Day.Content>
       </Day.Root>
       {activities
         .filter(activity => activity.deliveryDate == date)
-        .map(({ title, subject, participants, points, id, deliveryDate, description }) => (
+        .map(activity => (
           <MountedActivity
-            title={title}
-            participants={participants}
-            deliveryDate={deliveryDate}
-            description={description}
-            points={points}
-            subject={subject}
-            key={title + index}
-            id={id}
+            activity={activity}
+            openRemoveActivityModal={openDeleteActivityModal}
+            openFinalizeActivityModal={openFinalizeActivityModal}
+            key={activity.title + activity.id}
           />
         ))}
     </View>
   ));
+
+  if (isActivitiesLoading) {
+    return (
+      <View className="p-3 bg-zinc-800 rounded-xl space-y-10">
+        <ActivityIndicator size={28} color={colors.zinc[400]} />
+      </View>
+    );
+  }
 
   return (
     <View className="p-3 bg-zinc-800 rounded-xl space-y-10">
@@ -98,7 +87,7 @@ export function ListOfActivities({
         activitiesWithDateJSX
       ) : (
         <Text className="text-zinc-400 font-sans-semibold text-base text-center">
-          Você ainda não tem nenhuma atividade registrada.
+          {customNoActivitiesText}
         </Text>
       )}
 
@@ -118,6 +107,116 @@ export function ListOfActivities({
             : "Criar Atividade"}
         </Text>
       </TouchableOpacity>
+
+      <MountedRemoveActivityModal
+        setActivityToRemoveId={setActivityToRemoveId}
+        activityToRemoveId={activityToRemoveId}
+        removeActivity={removeActivity}
+      />
+
+      <MountedFinalizeActivityModal
+        setActivityToFinalize={setActivityToFinalize}
+        activityToFinalize={activityToFinalize}
+        finalizeActivity={finalizeActivity}
+      />
     </View>
+  );
+}
+
+interface MountedRemoveActivityModalProps {
+  setActivityToRemoveId: React.Dispatch<React.SetStateAction<number>>;
+  activityToRemoveId: number;
+  removeActivity: (id: number) => Promise<void>;
+}
+
+function MountedRemoveActivityModal({
+  activityToRemoveId,
+  removeActivity,
+  setActivityToRemoveId,
+}: MountedRemoveActivityModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleDeleteActivity() {
+    setIsDeleting(true);
+
+    await removeActivity(activityToRemoveId);
+
+    setIsDeleting(false);
+    setActivityToRemoveId(null);
+  }
+
+  return (
+    <Modal.Root visible={activityToRemoveId != null}>
+      <Modal.Content>
+        <Modal.ContentText className="text-center font-sans-semibold text-lg">
+          Você tem certeza que deseja excluir essa atividade?
+        </Modal.ContentText>
+      </Modal.Content>
+
+      <View className="space-y-3 mt-5">
+        <Modal.Button
+          onPress={() => setActivityToRemoveId(null)}
+          className="bg-green-600 p-4 items-center justify-center rounded-xl"
+        >
+          <Text className="font-sans-semibold text-lg text-zinc-50">Cancelar</Text>
+        </Modal.Button>
+        <LoadingButton
+          onPress={handleDeleteActivity}
+          isLoading={isDeleting}
+          className="bg-red-600 p-4 items-center justify-center rounded-xl"
+        >
+          <Text className="font-sans-semibold text-lg text-zinc-50">Excluir</Text>
+        </LoadingButton>
+      </View>
+    </Modal.Root>
+  );
+}
+
+interface MountedFinalizeActivityModalProps {
+  finalizeActivity: (activityData: ActivityData) => Promise<void>;
+  setActivityToFinalize: React.Dispatch<React.SetStateAction<ActivityData>>;
+  activityToFinalize: ActivityData;
+}
+
+function MountedFinalizeActivityModal({
+  activityToFinalize,
+  setActivityToFinalize,
+  finalizeActivity,
+}: MountedFinalizeActivityModalProps) {
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
+  async function handleFinalizeActivity() {
+    setIsFinalizing(true);
+
+    await finalizeActivity(activityToFinalize);
+
+    setIsFinalizing(false);
+    setActivityToFinalize(null);
+  }
+
+  return (
+    <Modal.Root visible={activityToFinalize != null}>
+      <Modal.Content>
+        <Modal.ContentText className="text-center font-sans-semibold text-lg">
+          Você tem certeza que deseja finalizar essa atividade?
+        </Modal.ContentText>
+      </Modal.Content>
+
+      <View className="space-y-3 mt-5">
+        <Modal.Button
+          onPress={() => setActivityToFinalize(null)}
+          className="bg-zinc-600 p-4 items-center justify-center rounded-xl"
+        >
+          <Text className="font-sans-semibold text-lg text-zinc-50">Cancelar</Text>
+        </Modal.Button>
+        <LoadingButton
+          onPress={handleFinalizeActivity}
+          isLoading={isFinalizing}
+          className="bg-green-500 p-4 items-center justify-center rounded-xl"
+        >
+          <Text className="font-sans-semibold text-lg text-zinc-50">Finalizar</Text>
+        </LoadingButton>
+      </View>
+    </Modal.Root>
   );
 }

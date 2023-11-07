@@ -11,6 +11,7 @@ import { useForm, Controller } from "react-hook-form";
 import { StackScreenProps } from "../routes/stack-navigator";
 
 import { LoginInput } from "../src/components/LoginInput";
+import { LoadingButton } from "../src/components/LoadingButton";
 
 export interface FormData {
   email: string;
@@ -23,12 +24,12 @@ export function LogIn({ navigation }: StackScreenProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     setError,
   } = useForm<FormData>();
 
-  function onSubmit(data: FormData) {
-    logIn(data).catch(errorMessage => {
+  async function onSubmit(data: FormData) {
+    await logIn(data).catch(errorMessage => {
       setError("email", { message: errorMessage });
       setError("password", { message: errorMessage });
     });
@@ -76,13 +77,14 @@ export function LogIn({ navigation }: StackScreenProps) {
               }}
             />
           </View>
-          <TouchableOpacity
+          <LoadingButton
             activeOpacity={0.7}
-            className="bg-green-500 py-4 rounded-lg"
+            className="bg-green-500 py-4 rounded-lg justify-center"
             onPress={handleSubmit(onSubmit)}
+            isLoading={isSubmitting}
           >
             <Text className="text-center text-zinc-50 font-sans-bold text-xl">Entrar</Text>
-          </TouchableOpacity>
+          </LoadingButton>
           <View className="flex-row items-center m-auto">
             <Text className="text-zinc-50 font-sans text-base align-middle">
               Ainda não possui uma conta?{" "}

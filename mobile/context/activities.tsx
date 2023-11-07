@@ -23,6 +23,8 @@ interface ActivitiesContextProps {
   addActivity(activityData: Omit<ActivityData, "id">): Promise<void>;
   removeActivity(activityIndex: number): Promise<void>;
   changeActivity(newActivityData: ActivityData): Promise<void>;
+  finalizeActivity(activityToFinalize: ActivityData): Promise<void>;
+  isActivitiesLoading: boolean;
 }
 
 export const ActivitiesContext = createContext<ActivitiesContextProps>(null);
@@ -33,6 +35,8 @@ interface ActivitiesContextProviderProps {
 
 export function ActivitiesContextProvider({ children }: ActivitiesContextProviderProps) {
   const [activities, setActivities] = useState<ActivityData[]>([]);
+  const [isActivitiesLoading, setIsActivitiesLoading] = useState(true);
+
   const { tryFunctionOrThrowError } = useContext(ErrorModalContext);
 
   const isConnectedToInternet = useNetInfo({
@@ -44,7 +48,7 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
     async function getActivities(isInternetReachable: boolean) {
       const storageActivities = await getActivitiesInStorage();
 
-      if (!isInternetReachable) {
+      if (isInternetReachable) {
         setActivities(storageActivities);
         return;
       }
@@ -60,7 +64,10 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
     }
 
     NetInfo.fetch().then(({ isInternetReachable }) =>
-      tryFunctionOrThrowError(() => getActivities(isInternetReachable))
+      tryFunctionOrThrowError(async () => {
+        await getActivities(!isInternetReachable);
+        setIsActivitiesLoading(false);
+      })
     );
   }, []);
 
@@ -72,7 +79,11 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
         addedActivity = await createAPIActivity(activityData);
       } else {
         addedActivity = activityData;
-        addedActivity.id = activities.length + 1;
+
+        const activitiesId = (await getActivitiesInStorage()).map(activity => activity.id);
+        const biggestActivityId = Math.max(...activitiesId, 0);
+
+        addedActivity.id = biggestActivityId + 1;
       }
 
       await registerActivitiesInStorage([...activities, addedActivity]);
@@ -108,8 +119,24 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
     });
   }
 
+  async function finalizeActivity(activityToFinalize: ActivityData) {
+    const finalizedActivity = activityToFinalize;
+    finalizedActivity.status = "finalized";
+
+    await changeActivity(finalizedActivity);
+  }
+
   return (
-    <ActivitiesContext.Provider value={{ activities, addActivity, removeActivity, changeActivity }}>
+    <ActivitiesContext.Provider
+      value={{
+        activities,
+        addActivity,
+        removeActivity,
+        changeActivity,
+        finalizeActivity,
+        isActivitiesLoading,
+      }}
+    >
       {children}
     </ActivitiesContext.Provider>
   );

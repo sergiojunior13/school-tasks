@@ -1,40 +1,57 @@
-import { useState, useContext } from "react";
-import { Text, View } from "react-native";
-
 import { useNavigation } from "@react-navigation/native";
 import { RootBottomTabNavigation } from "../../routes/bottom-tab-navigator";
 
 import * as Activity from "./Activity";
-import * as Modal from "./Modal";
 
 import { ActivityData } from "../../services/tasks";
-import { ActivitiesContext } from "../../context/activities";
 
 import Octicons from "@expo/vector-icons/Octicons";
 import colors from "tailwindcss/colors";
 
-export function MountedActivity(activity: ActivityData) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const { removeActivity } = useContext(ActivitiesContext);
+import { calculateDiffOfDateAndTodayInDays } from "../../utils/date";
 
+interface MountedActivityProps {
+  activity: ActivityData;
+  openRemoveActivityModal: (activityId: number) => void;
+  openFinalizeActivityModal: (activity: ActivityData) => void;
+}
+
+export function MountedActivity({
+  activity,
+  openRemoveActivityModal,
+  openFinalizeActivityModal,
+}: MountedActivityProps) {
   const { jumpTo } = useNavigation<RootBottomTabNavigation<any>["navigation"]>();
+
+  let alertMessage = null;
+
+  if (activity.status === "finalized") {
+    alertMessage = "• Finalizada";
+  } else if (calculateDiffOfDateAndTodayInDays(activity.deliveryDate) < 0) {
+    alertMessage = "• Atrasada";
+  }
 
   return (
     <Activity.Root onPress={() => jumpTo("full-activity", activity)}>
-      <MountedModal
-        isModalOpen={isModalOpen}
-        setIsModalOpen={setIsModalOpen}
-        removeActivity={removeActivity}
-        activityId={activity.id}
-      />
       <Activity.Header>
-        <Activity.Subject>{activity.subject}</Activity.Subject>
+        <Activity.AlertContainer>
+          <Activity.Subject>{activity.subject}</Activity.Subject>
+          {alertMessage && <Activity.Alert>{alertMessage}</Activity.Alert>}
+        </Activity.AlertContainer>
 
         <Activity.ButtonGroup>
-          <Activity.Button className="bg-sky-500" onPress={() => jumpTo("edit-activity", activity)}>
-            <Octicons name="pencil" size={22} color={colors.zinc[50]} />
-          </Activity.Button>
-          <Activity.Button className="bg-red-500" onPress={() => setIsModalOpen(true)}>
+          {activity.status !== "finalized" && (
+            <Activity.Button
+              className="bg-green-500"
+              onPress={() => openFinalizeActivityModal(activity)}
+            >
+              <Octicons name="check" size={22} color={colors.zinc[50]} />
+            </Activity.Button>
+          )}
+          <Activity.Button
+            className="bg-red-500"
+            onPress={() => openRemoveActivityModal(activity.id)}
+          >
             <Octicons name="trash" size={22} color={colors.zinc[50]} />
           </Activity.Button>
         </Activity.ButtonGroup>
@@ -51,48 +68,5 @@ export function MountedActivity(activity: ActivityData) {
         {activity.points > 0 && <Activity.Points>{activity.points.toFixed(1)}pts</Activity.Points>}
       </Activity.Footer>
     </Activity.Root>
-  );
-}
-
-interface MountedModalProps extends Modal.ModalWithStateProps {
-  removeActivity: (activityId: number) => Promise<void>;
-  activityId: number;
-}
-
-function MountedModal({
-  isModalOpen,
-  setIsModalOpen,
-  removeActivity,
-  activityId,
-}: MountedModalProps) {
-  async function handleDeleteActivity() {
-    await removeActivity(activityId);
-
-    setIsModalOpen(false);
-  }
-
-  return (
-    <Modal.Root visible={isModalOpen}>
-      <Modal.Content>
-        <Modal.ContentText className="text-center font-sans-semibold text-lg">
-          Você tem certeza que deseja excluir essa atividade?
-        </Modal.ContentText>
-      </Modal.Content>
-
-      <View className="space-y-3 mt-5">
-        <Modal.Button
-          onPress={() => setIsModalOpen(false)}
-          className="bg-green-600 p-4 items-center justify-center rounded-xl"
-        >
-          <Text className="font-sans-semibold text-lg text-zinc-50">Cancelar</Text>
-        </Modal.Button>
-        <Modal.Button
-          onPress={handleDeleteActivity}
-          className="bg-red-600 p-4 items-center justify-center rounded-xl"
-        >
-          <Text className="font-sans-semibold text-lg text-zinc-50">Excluir</Text>
-        </Modal.Button>
-      </View>
-    </Modal.Root>
   );
 }

@@ -1,11 +1,13 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { AuthContext } from "../context/auth";
+import { LoadingButton } from "../src/components/LoadingButton";
 
 export function Account() {
   const {
     signOut,
     user: { email },
+    isLoggingOut,
   } = useContext(AuthContext);
 
   return (
@@ -17,9 +19,13 @@ export function Account() {
         <Text className="text-zinc-400 text-lg font-sans">{email}</Text>
       </View>
 
-      <TouchableOpacity onPress={signOut} className="bg-red-600 py-3 rounded-lg">
+      <LoadingButton
+        onPress={signOut}
+        className="bg-red-600 py-3 rounded-lg justify-center"
+        isLoading={isLoggingOut}
+      >
         <Text className="text-center text-zinc-50 font-sans-bold text-lg">Sair</Text>
-      </TouchableOpacity>
+      </LoadingButton>
     </View>
   );
 }

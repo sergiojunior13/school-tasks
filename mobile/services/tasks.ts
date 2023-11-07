@@ -9,6 +9,7 @@ export interface ActivityData {
   deliveryDate: string;
   participants: string[];
   points: number;
+  status?: "pending" | "finalized";
 }
 
 export async function getAllAPIActivities(): Promise<ActivityData[]> {
