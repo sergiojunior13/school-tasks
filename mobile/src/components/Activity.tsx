@@ -1,5 +1,5 @@
 import { TouchableOpacity, TouchableOpacityProps, View, Text } from "react-native";
-import Octicons from "@expo/vector-icons/Octicons";
+import { Icon } from "./Icon";
 import colors from "tailwindcss/colors";
 import { TextProps } from "react-native/Libraries/Text/Text";
 
@@ -88,7 +88,7 @@ export function Footer({ children }: ActivityProps) {
 export function Participants({ children }: ActivityProps) {
   return (
     <View className="flex-row space-x-2 max-w-[90%]">
-      <Octicons name="people" color={colors.zinc[400]} size={20} />
+      <Icon name="people" color={colors.zinc[400]} size={20} />
       <Text className="text-zinc-400 font-sans" numberOfLines={1}>
         {children}
       </Text>

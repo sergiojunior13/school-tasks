@@ -6,6 +6,7 @@ const ACCESS_TOKEN_KEY = "access_token";
 const USER_KEY = "user";
 const ACTIVITIES_KEY = "activities";
 const LOGOUT_REQUEST_KEY = "logout_request";
+const HOURS_TO_NOTIFY_KEY = "hours_to_notify";
 
 export async function getAccessTokenInStorage() {
   return await getItemAsync(ACCESS_TOKEN_KEY);
@@ -77,4 +78,20 @@ export async function registerLogOutRequestInStorage() {
 export async function getPendingLogOutRequestAccessTokenInStorage() {
   const pendingLogOutRequestAccessToken = await getItemAsync(LOGOUT_REQUEST_KEY);
   return pendingLogOutRequestAccessToken;
+}
+
+export async function registerHoursToNotify(hoursToNotify: number[]) {
+  await setItemAsync(HOURS_TO_NOTIFY_KEY, JSON.stringify(hoursToNotify));
+}
+
+export async function getHoursToNotify(): Promise<number[]> {
+  const stringifiedHours = await getItemAsync(HOURS_TO_NOTIFY_KEY);
+
+  if (stringifiedHours === null) return [6, 12, 16, 18, 20];
+
+  return JSON.parse(stringifiedHours);
+}
+
+export async function removeHoursToNotify() {
+  await deleteItemAsync(HOURS_TO_NOTIFY_KEY);
 }

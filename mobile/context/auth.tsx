@@ -12,10 +12,12 @@ import {
   removeAccessTokenInStorage,
   removeAllActivitiesInStorage,
   removeUserInStorage,
+  removeHoursToNotify,
 } from "../utils/local-storage";
 
 import { ErrorModalContext } from "./error-modal";
 import { useNetInfo } from "@react-native-community/netinfo";
+import { cancelAllNotifications } from "../utils/notification";
 
 export interface UserData {
   email: string;
@@ -96,6 +98,8 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
       await removeAccessTokenInStorage();
       await removeUserInStorage();
       await removeAllActivitiesInStorage();
+      await removeHoursToNotify();
+      await cancelAllNotifications();
 
       setIsSigned(false);
       setAccessToken(null);

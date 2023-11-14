@@ -5,8 +5,7 @@ import * as Activity from "./Activity";
 
 import { ActivityData } from "../../services/tasks";
 
-import Octicons from "@expo/vector-icons/Octicons";
-import colors from "tailwindcss/colors";
+import { Icon } from "./Icon";
 
 import { calculateDiffOfDateAndTodayInDays } from "../../utils/date";
 
@@ -45,14 +44,14 @@ export function MountedActivity({
               className="bg-green-500"
               onPress={() => openFinalizeActivityModal(activity)}
             >
-              <Octicons name="check" size={22} color={colors.zinc[50]} />
+              <Icon name="check" size={22} />
             </Activity.Button>
           )}
           <Activity.Button
             className="bg-red-500"
             onPress={() => openRemoveActivityModal(activity.id)}
           >
-            <Octicons name="trash" size={22} color={colors.zinc[50]} />
+            <Icon name="trash" size={22} />
           </Activity.Button>
         </Activity.ButtonGroup>
       </Activity.Header>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+
 import {
   ActivityData,
   createAPIActivity,
@@ -16,7 +17,10 @@ import {
   registerActivitiesInStorage,
   removeActivityInStorage,
 } from "../utils/local-storage";
+
 import { ErrorModalContext } from "./error-modal";
+
+import { notify } from "../utils/notification";
 
 interface ActivitiesContextProps {
   activities: ActivityData[];
@@ -48,7 +52,7 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
     async function getActivities(isInternetReachable: boolean) {
       const storageActivities = await getActivitiesInStorage();
 
-      if (isInternetReachable) {
+      if (!isInternetReachable) {
         setActivities(storageActivities);
         return;
       }
@@ -58,18 +62,22 @@ export function ActivitiesContextProvider({ children }: ActivitiesContextProvide
         await registerActivitiesInStorage(apiActivities);
         setActivities(apiActivities);
       } else {
-        await replaceAllAPIActivitiesWithActivitiesFromStorage(storageActivities);
+        replaceAllAPIActivitiesWithActivitiesFromStorage(storageActivities);
         setActivities(storageActivities);
       }
     }
 
     NetInfo.fetch().then(({ isInternetReachable }) =>
       tryFunctionOrThrowError(async () => {
-        await getActivities(!isInternetReachable);
+        await getActivities(isInternetReachable);
         setIsActivitiesLoading(false);
       })
     );
   }, []);
+
+  useEffect(() => {
+    notify(activities);
+  }, [activities]);
 
   async function addActivity(activityData: ActivityData) {
     await tryFunctionOrThrowError(async () => {

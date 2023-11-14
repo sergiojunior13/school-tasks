@@ -1,10 +1,10 @@
 import { createContext, useState } from "react";
+import { TouchableOpacity } from "react-native";
 
-import Octicons from "@expo/vector-icons/Octicons";
 import colors from "tailwindcss/colors";
 
 import * as Modal from "../src/components/Modal";
-import { TouchableOpacity } from "react-native";
+import { Icon } from "../src/components/Icon";
 
 interface ErrorModalData {
   tryFunctionOrThrowError: (functionCode: Function) => Promise<void>;
@@ -35,7 +35,7 @@ export function ErrorModalContextProvider({ children }: { children: React.ReactN
             <Modal.HeaderText>{error.name}</Modal.HeaderText>
 
             <TouchableOpacity activeOpacity={0.7} onPress={() => setIsErrorModalOpen(false)}>
-              <Octicons name="x" color={colors.red[600]} size={32} />
+              <Icon name="x" color={colors.red[600]} size={32} />
             </TouchableOpacity>
           </Modal.Header>
 

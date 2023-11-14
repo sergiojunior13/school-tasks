@@ -6,7 +6,7 @@ import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/d
 
 import { ActivityData } from "../../services/tasks";
 
-import { Octicons } from "@expo/vector-icons";
+import { Icon } from "./Icon";
 import colors from "tailwindcss/colors";
 import dayjs from "dayjs";
 
@@ -57,7 +57,7 @@ export function DateInput({
           borderWidth: errors["deliveryDate"] ? 2 : 0,
         }}
       >
-        <Octicons name="calendar" size={24} color={colors.zinc[50]} />
+        <Icon name="calendar" size={24} />
         <Text className="text-zinc-50 font-sans-semibold text-base">
           {date ? dayjs(date).format("DD/MM/YY") : "Selecionar data"}
         </Text>

@@ -4,7 +4,7 @@ import { ScrollView, TouchableOpacity, View, Text } from "react-native";
 import { RootBottomTabNavigation } from "../routes/bottom-tab-navigator";
 import { ActivityData } from "../services/tasks";
 
-import Octicons from "@expo/vector-icons/Octicons";
+import { Icon } from "../src/components/Icon";
 import colors from "tailwindcss/colors";
 import dayjs from "dayjs";
 import { ActivitiesContext } from "../context/activities";
@@ -57,7 +57,7 @@ export function FullActivity({
         <View className="px-2 flex-row items-center justify-between mb-2">
           <View className="flex-row space-x-5 items-center">
             <TouchableOpacity activeOpacity={0.7} onPress={goBack} className="p-4 pl-0">
-              <Octicons name="chevron-left" color={colors.zinc[50]} size={32} />
+              <Icon name="chevron-left" size={32} />
             </TouchableOpacity>
             <Text className="text-center text-zinc-50 text-2xl font-sans-bold">Atividade</Text>
           </View>
@@ -68,7 +68,7 @@ export function FullActivity({
             className="flex-row space-x-2 items-center"
           >
             <Text className="text-sky-500 font-sans-semibold text-lg">Editar</Text>
-            <Octicons name="pencil" color={colors.sky[500]} size={20} />
+            <Icon name="pencil" color={colors.sky[500]} size={20} />
           </TouchableOpacity>
         </View>
 
@@ -90,7 +90,7 @@ export function FullActivity({
           className="flex-row space-x-3 items-center justify-center rounded-lg bg-red-600 py-4 mt-16"
           isLoading={isDeleting}
         >
-          <Octicons name="trash" color={colors.zinc[50]} size={24} />
+          <Icon name="trash" size={24} />
           <Text className="text-xl font-sans-bold text-zinc-50">Excluir</Text>
         </LoadingButton>
 
@@ -100,7 +100,7 @@ export function FullActivity({
             className="flex-row space-x-3 items-center justify-center rounded-lg bg-green-600 py-4 mt-4"
             isLoading={isFinalizing}
           >
-            <Octicons name="check" color={colors.zinc[50]} size={24} />
+            <Icon name="check" size={24} />
             <Text className="text-xl font-sans-bold text-zinc-50">Finalizar</Text>
           </LoadingButton>
         )}

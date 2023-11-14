@@ -75,8 +75,8 @@ export function ListOfActivities({
 
   if (isActivitiesLoading) {
     return (
-      <View className="p-3 bg-zinc-800 rounded-xl space-y-10">
-        <ActivityIndicator size={28} color={colors.zinc[400]} />
+      <View className="py-6 bg-zinc-800 rounded-xl space-y-10">
+        <ActivityIndicator size={32} color={colors.zinc[400]} />
       </View>
     );
   }

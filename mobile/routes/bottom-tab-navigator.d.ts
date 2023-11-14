@@ -11,6 +11,7 @@ export type BottomTabParamList = {
   "create-activity": undefined;
   "edit-activity": ActivityData;
   account: undefined;
+  notifications: undefined;
 };
 
 export type BottomTabScreenNames = keyof BottomTabParamList;

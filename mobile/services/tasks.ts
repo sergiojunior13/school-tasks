@@ -39,6 +39,7 @@ export async function getAllAPIActivities(): Promise<ActivityData[]> {
       deliveryDate: activity.date,
       participants: activity.members.split(","),
       points: activity.value,
+      status: activity.status,
     };
   });
 
@@ -123,6 +124,7 @@ interface APIActivityData {
   members: string;
   members_id: string;
   value: number;
+  status: "pending" | "finalized";
 }
 
 function transformActivityToAPIActivityData({
@@ -132,6 +134,7 @@ function transformActivityToAPIActivityData({
   deliveryDate,
   description,
   participants,
+  status,
 }: ActivityData | Omit<ActivityData, "id">) {
   return {
     title: title,
@@ -141,5 +144,6 @@ function transformActivityToAPIActivityData({
     members: participants.join(","),
     value: points,
     members_id: "",
+    status,
   };
 }
