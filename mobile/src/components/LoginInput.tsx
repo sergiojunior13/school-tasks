@@ -5,18 +5,11 @@ import { StyledTextInput } from "./StyledTextInput";
 
 import { FormData } from "../../screens/LogIn";
 
-interface LoginInputProps
-  extends ControllerRenderProps<FormData, "email" | "password"> {
+interface LoginInputProps extends ControllerRenderProps<FormData, "email" | "password"> {
   errors: FieldErrors<FormData>;
 }
 
-export function LoginInput({
-  onBlur,
-  onChange,
-  value,
-  name,
-  errors,
-}: LoginInputProps) {
+export function LoginInput({ onBlur, onChange, value, name, errors }: LoginInputProps) {
   enum labelName {
     email = "Email",
     password = "Senha",
@@ -29,14 +22,12 @@ export function LoginInput({
 
   enum keyboardType {
     email = "email-address",
-    password = "visible-password",
+    password = "default",
   }
 
   return (
     <View className="space-y-2 mb-4">
-      <Text className="text-zinc-50 text-xl font-sans-bold">
-        {labelName[name]}
-      </Text>
+      <Text className="text-zinc-50 text-xl font-sans-bold">{labelName[name]}</Text>
       <StyledTextInput
         data-isinvalid={!!errors[name]}
         onBlur={onBlur}
@@ -45,10 +36,9 @@ export function LoginInput({
         autoCapitalize="none"
         keyboardType={keyboardType[name]}
         placeholder={placeholderText[name]}
+        secureTextEntry={name == "password"}
       />
-      {errors[name] && (
-        <Text className="text-red-500 font-sans">{errors[name].message}</Text>
-      )}
+      {errors[name] && <Text className="text-red-500 font-sans">{errors[name].message}</Text>}
     </View>
   );
 }

@@ -18,6 +18,8 @@ export function Notifications({
   const [hoursToNotify, setHoursToNotify] = useState([6, 12, 16, 18, 20]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const { activities } = useContext(ActivitiesContext);
+
   useEffect(() => {
     getHoursToNotify().then(setHoursToNotify);
   }, []);
@@ -36,8 +38,6 @@ export function Notifications({
     setIsLoading(true);
 
     await registerHoursToNotify(hoursToNotify);
-
-    const { activities } = useContext(ActivitiesContext);
     await notify(activities);
 
     setIsLoading(false);

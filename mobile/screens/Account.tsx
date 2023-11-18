@@ -25,7 +25,7 @@ export function Account({ navigation: { navigate } }: RootBottomTabNavigation<"a
       </View>
 
       <TouchableOpacity
-        className="flex-row justify-between items-center"
+        className="flex-row justify-between items-center mb-20"
         onPress={() => navigate("notifications")}
       >
         <Text className="text-zinc-50 text-xl font-sans-bold">Notificações</Text>
